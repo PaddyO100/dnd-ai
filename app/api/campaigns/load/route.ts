@@ -117,11 +117,10 @@ export async function POST(req: NextRequest) {
     const gameState: Partial<GameState> = {
       step: 'inGame',
       selections: {
-        genre: campaign.worldInfo.setting,
+        genre: 'Fantasy', // Default da jetzt nur noch Fantasy
         world: {
           magic: campaign.worldInfo.magicLevel,
-          tech: campaign.worldInfo.techLevel,
-          climate: 'temperate', // Default
+          climate: campaign.worldInfo.climateSetting,
         },
         players: campaign.playerCount.min,
         classes: [],

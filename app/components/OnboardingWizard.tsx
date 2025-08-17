@@ -3,12 +3,11 @@
 import React, { useMemo, useState } from "react";
 import { useGameStore, type Scenario, type Player } from "@/lib/state/gameStore";
 
-type WorldPrefs = { magic: string; tech: string; climate: string };
+type WorldPrefs = { magic: string; climate: string };
 
 const genres = ["Fantasy", "Sci-Fi", "Steampunk", "Cyberpunk", "Mystic"];
 const frames = ["Heroisch", "Grimdark", "Entdeckung", "Intrige", "Überleben"];
 const magicLevels = ["Niedrig", "Mittel", "Hoch", "Wild"];
-const techLevels = ["Mittelalterlich", "Industrie", "Modern", "Futuristisch"];
 const climates = ["Gemäßigt", "Kalt", "Heiß", "Tropisch", "Wüste", "Nebelhaft"];
 const classOptions = [
 	"Krieger",
@@ -29,7 +28,7 @@ export default function OnboardingWizard() {
 	const [localGenre, setLocalGenre] = useState<string>(selections.genre || genres[0]);
 	const [localFrame, setLocalFrame] = useState<string>(selections.frame || frames[0]);
 	const [world, setWorld] = useState<WorldPrefs>(
-		selections.world || { magic: magicLevels[1], tech: techLevels[0], climate: climates[0] }
+		selections.world || { magic: magicLevels[1], climate: climates[0] }
 	);
 	const [conflict, setConflict] = useState<string>(selections.conflict || "");
 	const [players, setPlayers] = useState<number>(selections.players || 3);
@@ -44,7 +43,7 @@ export default function OnboardingWizard() {
 
 	const canContinue = useMemo(() => {
 		if (step === 1) return Boolean(localGenre && localFrame);
-		if (step === 2) return Boolean(world.magic && world.tech && world.climate);
+		if (step === 2) return Boolean(world.magic && world.climate);
 		if (step === 3) return conflict.trim().length > 5; // etwas sinnvolles
 		if (step === 4) return players >= 1 && classes.length >= 1;
 		if (step === 5) return Boolean(selectedScenario);
@@ -218,9 +217,8 @@ export default function OnboardingWizard() {
 				{step === 2 && (
 					<section>
 						<h2 className="text-xl font-semibold mb-3">Weltpräferenzen</h2>
-						<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<Picker label="Magie" value={world.magic} options={magicLevels} onChange={(v) => setWorld((w) => ({ ...w, magic: v }))} />
-							<Picker label="Technologie" value={world.tech} options={techLevels} onChange={(v) => setWorld((w) => ({ ...w, tech: v }))} />
 							<Picker label="Klima" value={world.climate} options={climates} onChange={(v) => setWorld((w) => ({ ...w, climate: v }))} />
 						</div>
 					</section>

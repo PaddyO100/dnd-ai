@@ -68,7 +68,7 @@ export type GameState = {
   selections: {
     genre?: string;
     frame?: string;
-    world?: { magic: string; tech: string; climate: string };
+    world?: { magic: string; climate: string };
     conflict?: string;
     players?: number;
     classes: string[];

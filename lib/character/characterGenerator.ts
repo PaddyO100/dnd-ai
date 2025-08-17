@@ -180,6 +180,8 @@ export const itemTemplates: Record<string, Omit<InventoryItem, 'quantity'>> = {
   langschwert: {
     name: "Langschwert",
     type: "weapon",
+    subtype: "main_hand",
+    location: "inventory",
     value: 15,
     effects: [{ type: "damage_bonus", value: "1d8", description: "Versatile weapon damage" }],
     rarity: "common",
@@ -190,6 +192,8 @@ export const itemTemplates: Record<string, Omit<InventoryItem, 'quantity'>> = {
   dolch: {
     name: "Dolch", 
     type: "weapon",
+    subtype: "main_hand",
+    location: "inventory",
     value: 2,
     effects: [{ type: "damage_bonus", value: "1d4", description: "Light finesse weapon" }],
     rarity: "common",
@@ -199,7 +203,9 @@ export const itemTemplates: Record<string, Omit<InventoryItem, 'quantity'>> = {
   },
   bogen: {
     name: "Bogen",
-    type: "weapon", 
+    type: "weapon",
+    subtype: "two_handed",
+    location: "inventory", 
     value: 25,
     effects: [{ type: "damage_bonus", value: "1d8", description: "Ranged weapon" }],
     rarity: "common",
@@ -210,6 +216,8 @@ export const itemTemplates: Record<string, Omit<InventoryItem, 'quantity'>> = {
   zauberstab: {
     name: "Zauberstab",
     type: "weapon",
+    subtype: "main_hand",
+    location: "inventory",
     value: 100,
     effects: [{ type: "spell", value: "+1", description: "Magic weapon bonus" }],
     rarity: "uncommon",
@@ -222,6 +230,8 @@ export const itemTemplates: Record<string, Omit<InventoryItem, 'quantity'>> = {
   lederschiene: {
     name: "Lederschiene",
     type: "armor",
+    subtype: "chest",
+    location: "inventory",
     value: 10,
     effects: [{ type: "stat_bonus", value: "11+DEX", description: "Armor Class bonus" }],
     rarity: "common",
@@ -233,7 +243,9 @@ export const itemTemplates: Record<string, Omit<InventoryItem, 'quantity'>> = {
   // Verbrauchsgegenstände
   heiltrank: {
     name: "Heiltrank",
-    type: "consumable", 
+    type: "consumable",
+    subtype: "none",
+    location: "inventory", 
     value: 50,
     effects: [{ type: "spell", value: "2d4+2", description: "Healing potion" }],
     rarity: "common",
@@ -244,6 +256,8 @@ export const itemTemplates: Record<string, Omit<InventoryItem, 'quantity'>> = {
   manatrank: {
     name: "Manatrank",
     type: "consumable",
+    subtype: "none",
+    location: "inventory",
     value: 25,
     effects: [{ type: "spell", value: "1d4+1", description: "Mana restoration" }],
     rarity: "common",
@@ -254,6 +268,8 @@ export const itemTemplates: Record<string, Omit<InventoryItem, 'quantity'>> = {
   rations: {
     name: "Reiserationen",
     type: "consumable",
+    subtype: "none",
+    location: "inventory",
     value: 2,
     effects: [{ type: "passive", value: "sustenance", description: "Daily food" }],
     rarity: "common",
@@ -266,6 +282,8 @@ export const itemTemplates: Record<string, Omit<InventoryItem, 'quantity'>> = {
   dietriche: {
     name: "Dietriche",
     type: "tool",
+    subtype: "none",
+    location: "inventory",
     value: 25,
     effects: [{ type: "stat_bonus", value: "+2", description: "Lockpicking bonus" }],
     rarity: "common",
@@ -275,7 +293,9 @@ export const itemTemplates: Record<string, Omit<InventoryItem, 'quantity'>> = {
   },
   seil: {
     name: "Seil (15m)",
-    type: "tool", 
+    type: "tool",
+    subtype: "none",
+    location: "inventory", 
     value: 2,
     effects: [{ type: "passive", value: "utility", description: "Climbing and binding" }],
     rarity: "common",
@@ -286,6 +306,8 @@ export const itemTemplates: Record<string, Omit<InventoryItem, 'quantity'>> = {
   pfeile: {
     name: "Pfeile (30 Stück)",
     type: "misc",
+    subtype: "none",
+    location: "inventory",
     value: 1,
     effects: [{ type: "passive", value: "ammunition", description: "Bow ammunition" }],
     rarity: "common",
@@ -298,6 +320,8 @@ export const itemTemplates: Record<string, Omit<InventoryItem, 'quantity'>> = {
   zauberkomponenten: {
     name: "Zauberkomponenten",
     type: "misc",
+    subtype: "none",
+    location: "inventory",
     value: 25,
     effects: [{ type: "passive", value: "spell_focus", description: "Spellcasting materials" }],
     rarity: "common",
@@ -308,6 +332,8 @@ export const itemTemplates: Record<string, Omit<InventoryItem, 'quantity'>> = {
   heiligensymbol: {
     name: "Heiliges Symbol",
     type: "misc",
+    subtype: "none",
+    location: "inventory",
     value: 5,
     effects: [{ type: "passive", value: "divine_focus", description: "Divine spellcasting focus" }],
     rarity: "common",
@@ -318,6 +344,8 @@ export const itemTemplates: Record<string, Omit<InventoryItem, 'quantity'>> = {
   gebetsbuch: {
     name: "Gebetsbuch",
     type: "misc",
+    subtype: "none",
+    location: "inventory",
     value: 25,
     effects: [{ type: "passive", value: "divine_knowledge", description: "Religious texts and prayers" }],
     rarity: "common",

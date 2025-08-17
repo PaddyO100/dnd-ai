@@ -30,11 +30,13 @@ export const Trait = z.object({
 
 export const InventoryItem = z.object({
   name: z.string(),
-  type: z.enum(['weapon', 'armor', 'consumable', 'tool', 'misc', 'quest', 'valuable']),
+  type: z.enum(['weapon', 'armor', 'consumable', 'tool', 'misc', 'quest', 'valuable', 'clothing']),
+  subtype: z.enum(['main_hand', 'off_hand', 'two_handed', 'helmet', 'chest', 'legs', 'feet', 'gloves', 'cloak', 'ring', 'amulet', 'belt', 'none']).default('none'),
   rarity: z.enum(['common', 'uncommon', 'rare', 'epic', 'legendary']).default('common'),
   quantity: z.number().default(1),
   description: z.string().optional(),
   equipped: z.boolean().default(false),
+  location: z.enum(['equipped', 'inventory', 'bag']).default('inventory'),
   effects: z.array(z.object({
     type: z.enum(['stat_bonus', 'damage_bonus', 'resistance', 'immunity', 'spell', 'passive']),
     value: z.union([z.number(), z.string()]),

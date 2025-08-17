@@ -5,6 +5,7 @@ import { InventoryItem, type Character } from '@/schemas/character';
 export interface ItemTemplate {
   name: string;
   type: InventoryItem['type'];
+  subtype?: InventoryItem['subtype'];
   rarity: InventoryItem['rarity'];
   description: string;
   effects: InventoryItem['effects'];
@@ -346,6 +347,8 @@ function createItemFromTemplate(template: ItemTemplate): InventoryItem {
   return {
     name: template.name,
     type: template.type,
+    subtype: template.subtype || 'none',
+    location: 'inventory',
     rarity: template.rarity,
     quantity: 1,
     description: template.description,

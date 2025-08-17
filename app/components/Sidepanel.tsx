@@ -8,6 +8,8 @@ import { getCurrentDirectorState, type DirectorState, type PacingType, type Tens
 import QuestsTab from './tabs/QuestsTab';
 import SpellsTab from './tabs/SpellsTab';
 import SavesTab from './tabs/SavesTab';
+import InventoryTab from './tabs/InventoryTab';
+import SkillsTab from './tabs/SkillsTab';
 
 type Tab = 'character' | 'inventory' | 'skills' | 'spells' | 'quests' | 'director' | 'dice' | 'saves';
 
@@ -143,22 +145,7 @@ export default function Sidepanel() {
       )}
 
       {tab === 'inventory' && (
-        <div className="text-sm space-y-2 max-h-96 overflow-y-auto scroll-fantasy pr-2">
-          {inventory.length ? (
-            inventory.map((it, i) => (
-              <div key={i} className="flex items-center gap-2 p-2 bg-amber-50 rounded-lg">
-                <div className="w-8 h-8 bg-amber-200 rounded flex items-center justify-center">
-                  <svg className="w-4 h-4 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                  </svg>
-                </div>
-                <span className="text-amber-800">{it}</span>
-              </div>
-            ))
-          ) : (
-            <div className="text-center py-8 text-amber-600">Inventar ist leer</div>
-          )}
-        </div>
+        <InventoryTab player={player} />
       )}
 
       {tab === 'skills' && (
@@ -466,154 +453,6 @@ function CharacterTab(props: {
       )}
       
   {/* portrait generation removed */}
-    </div>
-  );
-}
-
-function SkillsTab({ player }: { player?: any }) {
-  const skills = player?.skills || [];
-  const spells = player?.spells || [];
-  const inventory = player?.inventory || [];
-
-  return (
-    <div className="space-y-4 max-h-96 overflow-y-auto scroll-fantasy pr-2">
-      {/* Skills Section */}
-      <div>
-        <h3 className="font-semibold text-amber-900 mb-2 flex items-center gap-2">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-          Fähigkeiten
-        </h3>
-        {skills.length > 0 ? (
-          <div className="space-y-2">
-            {skills.map((skill: any, i: number) => (
-              <div key={i} className="bg-amber-50 rounded-lg p-3">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-medium text-amber-900">{skill.name}</span>
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: skill.max || 5 }).map((_, j) => (
-                      <div
-                        key={j}
-                        className={`w-3 h-3 rounded-full ${
-                          j < (skill.level || 0) ? 'bg-amber-500' : 'bg-amber-200'
-                        }`}
-                      />
-                    ))}
-                    <span className="ml-2 text-xs text-amber-600">
-                      {skill.level || 0}/{skill.max || 5}
-                    </span>
-                  </div>
-                </div>
-                {skill.description && (
-                  <p className="text-xs text-amber-600 mt-1">{skill.description}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-4 text-amber-600 text-sm">
-            Keine Fähigkeiten vorhanden
-          </div>
-        )}
-      </div>
-
-      {/* Spells Section */}
-      <div>
-        <h3 className="font-semibold text-amber-900 mb-2 flex items-center gap-2">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-          </svg>
-          Zauber & Magie
-        </h3>
-        {spells.length > 0 ? (
-          <div className="space-y-2">
-            {spells.map((spell: any, i: number) => (
-              <div key={i} className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3 border border-blue-200">
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-blue-900">{spell.name}</span>
-                    {spell.level && (
-                      <span className="text-xs bg-purple-200 text-purple-800 px-2 py-1 rounded">
-                        Lvl {spell.level}
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded">
-                    {spell.cost} MP
-                  </span>
-                </div>
-                <p className="text-xs text-blue-700">{spell.description}</p>
-                {spell.school && (
-                  <div className="mt-1">
-                    <span className="text-xs text-purple-600 italic">{spell.school}</span>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-4 text-amber-600 text-sm">
-            Keine Zauber bekannt
-          </div>
-        )}
-      </div>
-
-      {/* Equipment Section */}
-      <div>
-        <h3 className="font-semibold text-amber-900 mb-2 flex items-center gap-2">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.618 5.984A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-          </svg>
-          Ausrüstung
-        </h3>
-        {inventory.length > 0 ? (
-          <div className="space-y-2">
-            {inventory.map((item: any, i: number) => (
-              <div key={i} className={`rounded-lg p-3 border ${
-                item.equipped 
-                  ? 'bg-green-50 border-green-200' 
-                  : 'bg-gray-50 border-gray-200'
-              }`}>
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-2">
-                    <span className={`font-medium ${
-                      item.equipped ? 'text-green-900' : 'text-gray-900'
-                    }`}>
-                      {item.name}
-                    </span>
-                    {item.equipped && (
-                      <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded">
-                        Angelegt
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs px-2 py-1 rounded capitalize ${
-                      item.type === 'weapon' ? 'bg-red-100 text-red-800' :
-                      item.type === 'armor' ? 'bg-blue-100 text-blue-800' :
-                      item.type === 'consumable' ? 'bg-green-100 text-green-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {item.type}
-                    </span>
-                    {item.quantity > 1 && (
-                      <span className="text-xs text-amber-600">×{item.quantity}</span>
-                    )}
-                  </div>
-                </div>
-                {item.description && (
-                  <p className="text-xs text-gray-600 mt-1">{item.description}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-4 text-amber-600 text-sm">
-            Keine Ausrüstung vorhanden
-          </div>
-        )}
-      </div>
     </div>
   );
 }
