@@ -1,0 +1,176 @@
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    "./app/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./lib/**/*.{ts,tsx}",
+    "./styles/**/*.{css,scss}",
+  ],
+  darkMode: ['class', '[data-theme="dark"]'],
+  theme: {
+    extend: {
+      fontFamily: {
+        'heading': ['var(--font-heading)', 'serif'],
+        'body': ['var(--font-body)', 'serif'],
+        'elegant': ['var(--font-elegant)', 'serif'],
+      },
+      colors: {
+        primary: {
+          50: 'var(--primary-50)',
+          100: 'var(--primary-100)',
+          200: 'var(--primary-200)',
+          300: 'var(--primary-300)',
+          400: 'var(--primary-400)',
+          500: 'var(--primary-500)',
+          600: 'var(--primary-600)',
+          700: 'var(--primary-700)',
+          800: 'var(--primary-800)',
+          900: 'var(--primary-900)',
+          950: 'var(--primary-950)',
+        },
+        secondary: {
+          50: 'var(--secondary-50)',
+          100: 'var(--secondary-100)',
+          200: 'var(--secondary-200)',
+          300: 'var(--secondary-300)',
+          400: 'var(--secondary-400)',
+          500: 'var(--secondary-500)',
+          600: 'var(--secondary-600)',
+          700: 'var(--secondary-700)',
+          800: 'var(--secondary-800)',
+          900: 'var(--secondary-900)',
+          950: 'var(--secondary-950)',
+        },
+        accent: {
+          50: 'var(--accent-50)',
+          100: 'var(--accent-100)',
+          200: 'var(--accent-200)',
+          300: 'var(--accent-300)',
+          400: 'var(--accent-400)',
+          500: 'var(--accent-500)',
+          600: 'var(--accent-600)',
+          700: 'var(--accent-700)',
+          800: 'var(--accent-800)',
+          900: 'var(--accent-900)',
+          950: 'var(--accent-950)',
+        },
+        mystical: {
+          50: 'var(--mystical-50)',
+          100: 'var(--mystical-100)',
+          200: 'var(--mystical-200)',
+          300: 'var(--mystical-300)',
+          400: 'var(--mystical-400)',
+          500: 'var(--mystical-500)',
+          600: 'var(--mystical-600)',
+          700: 'var(--mystical-700)',
+          800: 'var(--mystical-800)',
+          900: 'var(--mystical-900)',
+          950: 'var(--mystical-950)',
+        },
+        neutral: {
+          50: 'var(--neutral-50)',
+          100: 'var(--neutral-100)',
+          200: 'var(--neutral-200)',
+          300: 'var(--neutral-300)',
+          400: 'var(--neutral-400)',
+          500: 'var(--neutral-500)',
+          600: 'var(--neutral-600)',
+          700: 'var(--neutral-700)',
+          800: 'var(--neutral-800)',
+          900: 'var(--neutral-900)',
+        },
+      },
+      backgroundImage: {
+        'gradient-fantasy': 'var(--bg-gradient-primary)',
+        'gradient-card': 'var(--bg-gradient-card)',
+        'gradient-button': 'var(--bg-gradient-button)',
+        'gradient-hero': 'var(--bg-gradient-hero)',
+        'gradient-panel': 'var(--bg-gradient-panel)',
+        'shimmer': 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent)',
+        'mystical-glow': 'radial-gradient(ellipse at center, rgba(168, 85, 247, 0.15) 0%, transparent 70%)',
+      },
+      boxShadow: {
+        'fantasy': 'var(--shadow-card)',
+        'fantasy-hover': 'var(--shadow-card-hover)',
+        'fantasy-button': 'var(--shadow-button)',
+        'mystical': 'var(--shadow-mystical)',
+        'inset-fantasy': 'var(--shadow-inset)',
+        'glow': '0 0 20px rgba(168, 85, 247, 0.3)',
+        'glow-strong': '0 0 40px rgba(168, 85, 247, 0.5)',
+      },
+      borderRadius: {
+        'fantasy-sm': 'var(--border-radius-sm)',
+        'fantasy-md': 'var(--border-radius-md)',
+        'fantasy-lg': 'var(--border-radius-lg)',
+        'fantasy-xl': 'var(--border-radius-xl)',
+      },
+      animation: {
+        'float': 'float 4s ease-in-out infinite',
+        'glow': 'glow 3s ease-in-out infinite',
+        'shimmer': 'shimmer 2s infinite',
+        'breathe': 'breathe 4s ease-in-out infinite',
+        'fade-in-up': 'fadeInUp 0.6s ease-out',
+        'fade-in': 'fadeIn 0.5s ease-out',
+        'slide-up': 'slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+        'slide-down': 'slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+        'scale-up': 'scaleUp 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        'gradient-shift': 'gradientShift 6s ease-in-out infinite',
+        'border-flow': 'borderFlow 3s linear infinite',
+        'particle-float': 'particleFloat 20s linear infinite',
+        'mystical-pulse': 'mysticalPulse 3s ease-in-out infinite',
+        'enchant-text': 'enchantText 4s ease-in-out infinite',
+      },
+      transitionDuration: {
+        '400': '400ms',
+      },
+      transitionTimingFunction: {
+        'bounce-in': 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+        'smooth': 'cubic-bezier(0.4, 0, 0.2, 1)',
+      },
+      spacing: {
+        '18': '4.5rem',
+        '88': '22rem',
+      },
+      zIndex: {
+        '60': '60',
+        '70': '70',
+        '80': '80',
+        '90': '90',
+        '100': '100',
+      },
+      fontSize: {
+        'xxs': '0.625rem',
+        '2.5xl': '1.75rem',
+        '3.5xl': '2rem',
+        '4.5xl': '2.5rem',
+      },
+      letterSpacing: {
+        'tighter': '-0.05em',
+        'wider': '0.05em',
+      },
+      lineHeight: {
+        'extra-loose': '2.5',
+        'relaxed': '1.75',
+      },
+    },
+  },
+  plugins: [
+    function({ addUtilities }) {
+      const newUtilities = {
+        '.text-shadow': {
+          textShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        },
+        '.text-shadow-lg': {
+          textShadow: '0 4px 8px rgba(0,0,0,0.2)',
+        },
+        '.backdrop-blur-strong': {
+          backdropFilter: 'blur(16px)',
+        },
+        '.scroll-smooth': {
+          scrollBehavior: 'smooth',
+        },
+      }
+      addUtilities(newUtilities)
+    }
+  ],
+}

@@ -1,0 +1,188 @@
+/* Theme Variables for Aethel's Forge */
+
+:root {
+  /* Light Theme (Default) */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --text-tertiary: #64748b;
+  --border-primary: #e2e8f0;
+  --border-secondary: #cbd5e1;
+  --accent-500: #f59e0b;
+  --primary-400: #3b82f6;
+  --secondary-500: #8b5cf6;
+  --success-500: #10b981;
+  --error-500: #ef4444;
+  --warning-500: #f59e0b;
+}
+
+[data-theme="dark"] {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  --border-primary: #334155;
+  --border-secondary: #475569;
+  --accent-500: #fbbf24;
+  --primary-400: #60a5fa;
+  --secondary-500: #a78bfa;
+  --success-500: #34d399;
+  --error-500: #f87171;
+  --warning-500: #fbbf24;
+}
+
+[data-theme="aethel"] {
+  /* Aethel's Mystical Theme - Deep blues and golds */
+  --bg-primary: #0a0f1c;
+  --bg-secondary: #1a2332;
+  --bg-tertiary: #2a3441;
+  --text-primary: #f0f4f8;
+  --text-secondary: #c7d2fe;
+  --text-tertiary: #a5b4fc;
+  --border-primary: #374151;
+  --border-secondary: #4b5563;
+  --accent-500: #fbbf24;
+  --primary-400: #6366f1;
+  --secondary-500: #8b5cf6;
+  --success-500: #10b981;
+  --error-500: #ef4444;
+  --warning-500: #f59e0b;
+  --bg-gradient-card: linear-gradient(135deg, #1a2332 0%, #2a3441 100%);
+  --border-radius-lg: 12px;
+}
+
+[data-theme="mystic"] {
+  /* Mystic Forest Theme - Greens and earth tones */
+  --bg-primary: #0f1a0f;
+  --bg-secondary: #1a2e1a;
+  --bg-tertiary: #2a3f2a;
+  --text-primary: #f0f8f0;
+  --text-secondary: #c7e7c7;
+  --text-tertiary: #a5d6a5;
+  --border-primary: #374f37;
+  --border-secondary: #4b6b4b;
+  --accent-500: #84cc16;
+  --primary-400: #22c55e;
+  --secondary-500: #16a34a;
+  --success-500: #15803d;
+  --error-500: #dc2626;
+  --warning-500: #ea580c;
+  --bg-gradient-card: linear-gradient(135deg, #1a2e1a 0%, #2a3f2a 100%);
+  --border-radius-lg: 12px;
+}
+
+[data-theme="dragon"] {
+  /* Dragon's Lair Theme - Reds and blacks */
+  --bg-primary: #1a0f0f;
+  --bg-secondary: #2e1a1a;
+  --bg-tertiary: #3f2a2a;
+  --text-primary: #f8f0f0;
+  --text-secondary: #e7c7c7;
+  --text-tertiary: #d6a5a5;
+  --border-primary: #4f3737;
+  --border-secondary: #6b4b4b;
+  --accent-500: #dc2626;
+  --primary-400: #ef4444;
+  --secondary-500: #f87171;
+  --success-500: #16a34a;
+  --error-500: #b91c1c;
+  --warning-500: #ea580c;
+  --bg-gradient-card: linear-gradient(135deg, #2e1a1a 0%, #3f2a2a 100%);
+  --border-radius-lg: 12px;
+}
+
+/* Auto theme detection */
+@media (prefers-color-scheme: dark) {
+  [data-theme="auto"] {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #334155;
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-tertiary: #94a3b8;
+    --border-primary: #334155;
+    --border-secondary: #475569;
+    --accent-500: #fbbf24;
+    --primary-400: #60a5fa;
+    --secondary-500: #a78bfa;
+    --success-500: #34d399;
+    --error-500: #f87171;
+    --warning-500: #fbbf24;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  [data-theme="auto"] {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --bg-tertiary: #f1f5f9;
+    --text-primary: #1e293b;
+    --text-secondary: #475569;
+    --text-tertiary: #64748b;
+    --border-primary: #e2e8f0;
+    --border-secondary: #cbd5e1;
+    --accent-500: #f59e0b;
+    --primary-400: #3b82f6;
+    --secondary-500: #8b5cf6;
+    --success-500: #10b981;
+    --error-500: #ef4444;
+    --warning-500: #f59e0b;
+  }
+}
+
+/* Base styling using CSS variables */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.bg-primary { background-color: var(--bg-primary); }
+.bg-secondary { background-color: var(--bg-secondary); }
+.bg-tertiary { background-color: var(--bg-tertiary); }
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-tertiary { color: var(--text-tertiary); }
+.border-primary { border-color: var(--border-primary); }
+.border-secondary { border-color: var(--border-secondary); }
+
+/* Enhanced button styling for themes */
+.btn-primary {
+  background-color: var(--primary-400);
+  color: white;
+  border: 1px solid var(--primary-400);
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-500);
+  border-color: var(--accent-500);
+}
+
+.btn-secondary {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background-color: var(--bg-tertiary);
+  border-color: var(--border-secondary);
+}
+
+/* Card styling with theme support */
+.card {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  border-color: var(--border-secondary);
+}

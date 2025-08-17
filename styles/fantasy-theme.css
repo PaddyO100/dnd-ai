@@ -1,0 +1,545 @@
+/* 
+ * Fantasy Theme Specific Styles
+ * Enhanced visual effects and immersive elements for Aethel's Forge
+ * Version 2.0 - Comprehensive Visual Overhaul
+ */
+
+/* ================================
+   MAGICAL EFFECTS & ENCHANTMENTS 
+   ================================ */
+.magical-border {
+  position: relative;
+  background: var(--bg-gradient-card);
+  border: 2px solid transparent;
+  border-radius: var(--border-radius-lg);
+  background-clip: padding-box;
+  overflow: hidden;
+}
+
+.magical-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 2px;
+  background: linear-gradient(45deg, var(--accent-500), var(--primary-400), var(--secondary-500), var(--accent-500));
+  border-radius: inherit;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  animation: borderRotate 4s linear infinite;
+}
+
+@keyframes borderRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from { 
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleUp {
+  from { 
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to { 
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes borderFlow {
+  0%, 100% { 
+    background-position: 0% 0%;
+  }
+  50% { 
+    background-position: 100% 100%;
+  }
+}
+
+@keyframes mysticalPulse {
+  0%, 100% { 
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes enchantText {
+  0%, 100% { 
+    background-position: 0% 50%;
+    filter: brightness(1);
+  }
+  25% { 
+    background-position: 25% 50%;
+    filter: brightness(1.1);
+  }
+  50% { 
+    background-position: 100% 50%;
+    filter: brightness(1.2);
+  }
+  75% { 
+    background-position: 75% 50%;
+    filter: brightness(1.1);
+  }
+}
+
+.enchanted-text {
+  background: linear-gradient(45deg, var(--primary-700), var(--accent-600), var(--secondary-600), var(--primary-700));
+  background-size: 400% 400%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: enchantmentFlow 3s ease-in-out infinite;
+}
+
+@keyframes enchantmentFlow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* =============================================
+   ADVANCED PARTICLE & ATMOSPHERIC EFFECTS 
+   ============================================= */
+.particle-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.particle-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, var(--accent-400), transparent),
+    radial-gradient(2px 2px at 40px 70px, var(--primary-400), transparent),
+    radial-gradient(1px 1px at 90px 40px, var(--secondary-400), transparent),
+    radial-gradient(1px 1px at 130px 80px, var(--mystical-400), transparent),
+    radial-gradient(2px 2px at 160px 30px, var(--primary-300), transparent),
+    radial-gradient(1px 1px at 10px 60px, var(--mystical-300), transparent),
+    radial-gradient(3px 3px at 180px 10px, var(--accent-500), transparent);
+  background-repeat: repeat;
+  background-size: 200px 100px;
+  animation: particleFloat 20s linear infinite;
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.particle-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--mystical-glow);
+  opacity: 0.1;
+  pointer-events: none;
+  animation: mysticalPulse 4s ease-in-out infinite;
+}
+
+@keyframes particleFloat {
+  from { transform: translateY(100%); }
+  to { transform: translateY(-100%); }
+}
+
+/* === SCROLL EFFECTS === */
+.scroll-fantasy {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-500) var(--primary-100);
+}
+
+.scroll-fantasy::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scroll-fantasy::-webkit-scrollbar-track {
+  background: var(--primary-100);
+  border-radius: 4px;
+}
+
+.scroll-fantasy::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--primary-500), var(--secondary-500));
+  border-radius: 4px;
+  border: 1px solid var(--primary-300);
+}
+
+.scroll-fantasy::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--primary-600), var(--secondary-600));
+}
+
+/* === ENHANCED BUTTONS === */
+.fantasy-btn {
+  position: relative;
+  background: var(--bg-gradient-button);
+  border: 2px solid var(--primary-600);
+  border-radius: var(--border-radius-md);
+  color: white;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  padding: 0.875rem 2rem;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  box-shadow: var(--shadow-button);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.875rem;
+}
+
+.fantasy-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.6s ease;
+}
+
+.fantasy-btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+.fantasy-btn:hover::before {
+  left: 100%;
+}
+
+.fantasy-btn:hover::after {
+  width: 300px;
+  height: 300px;
+}
+
+.fantasy-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px -4px rgba(245, 158, 11, 0.4);
+}
+
+.fantasy-btn:active {
+  transform: translateY(-1px);
+}
+
+/* === CARD ENHANCEMENTS === */
+.rune-card {
+  position: relative;
+  background: var(--bg-gradient-card);
+  border: 2px solid var(--primary-300);
+  border-radius: var(--border-radius-xl);
+  padding: 2rem;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.rune-card::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, var(--accent-500), var(--primary-400), var(--secondary-500));
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.rune-card::after {
+  content: '⟐'; /* Fantasy rune symbol */
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 1.5rem;
+  color: var(--primary-300);
+  opacity: 0.5;
+  transition: all 0.3s ease;
+}
+
+.rune-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.rune-card:hover::before {
+  opacity: 1;
+}
+
+.rune-card:hover::after {
+  color: var(--accent-500);
+  opacity: 1;
+  transform: rotate(180deg);
+}
+
+/* === LOADING STATES === */
+.mystical-loader {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, var(--accent-500), var(--primary-500), var(--secondary-500), var(--accent-500));
+  animation: mysticalSpin 2s linear infinite;
+}
+
+.mystical-loader::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  bottom: 4px;
+  background: var(--primary-50);
+  border-radius: 50%;
+}
+
+@keyframes mysticalSpin {
+  to { transform: rotate(360deg); }
+}
+
+.crystal-pulse {
+  animation: crystalPulse 2s ease-in-out infinite;
+}
+
+@keyframes crystalPulse {
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% { 
+    opacity: 0.7; 
+    transform: scale(1.05);
+    filter: brightness(1.2);
+  }
+}
+
+/* === INTERACTIVE ELEMENTS === */
+.fantasy-toggle {
+  position: relative;
+  width: 60px;
+  height: 30px;
+  background: var(--primary-200);
+  border-radius: 15px;
+  border: 2px solid var(--primary-300);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.fantasy-toggle::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  background: linear-gradient(135deg, var(--primary-500), var(--secondary-500));
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.fantasy-toggle.active {
+  background: var(--accent-400);
+  border-color: var(--accent-500);
+}
+
+.fantasy-toggle.active::before {
+  transform: translateX(30px);
+  background: linear-gradient(135deg, var(--accent-600), var(--primary-600));
+}
+
+/* === TOOLTIP ENHANCEMENTS === */
+.fantasy-tooltip {
+  position: relative;
+  cursor: help;
+}
+
+.fantasy-tooltip::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  background: linear-gradient(135deg, var(--neutral-800), var(--neutral-700));
+  color: var(--primary-50);
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius-md);
+  font-size: 0.875rem;
+  font-family: var(--font-body);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--primary-400);
+}
+
+.fantasy-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-2px);
+  border: 6px solid transparent;
+  border-top-color: var(--neutral-800);
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 1001;
+}
+
+.fantasy-tooltip:hover::before,
+.fantasy-tooltip:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-12px);
+}
+
+/* === PROGRESS INDICATORS === */
+.fantasy-progress {
+  width: 100%;
+  height: 8px;
+  background: var(--primary-100);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--primary-200);
+}
+
+.fantasy-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-500), var(--primary-500), var(--secondary-500));
+  background-size: 200% 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+  animation: progressShimmer 2s ease-in-out infinite;
+}
+
+@keyframes progressShimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* === MODAL ENHANCEMENTS === */
+.fantasy-modal-backdrop {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.fantasy-modal {
+  background: var(--bg-gradient-card);
+  border: 2px solid var(--primary-300);
+  border-radius: var(--border-radius-xl);
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px var(--primary-200),
+    inset 0 1px 0 var(--primary-50);
+  animation: modalSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* === RESPONSIVE ENHANCEMENTS === */
+@media (max-width: 768px) {
+  .fantasy-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.8rem;
+  }
+  
+  .rune-card {
+    padding: 1.5rem;
+  }
+  
+  .rune-card::after {
+    font-size: 1.25rem;
+    top: 0.75rem;
+    right: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .fantasy-btn {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.75rem;
+  }
+  
+  .fantasy-tooltip::before {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+  }
+}
+
+/* === ACCESSIBILITY IMPROVEMENTS === */
+@media (prefers-reduced-motion: reduce) {
+  .magical-border::before,
+  .enchanted-text,
+  .particle-container::before,
+  .mystical-loader,
+  .crystal-pulse,
+  .fantasy-progress-bar {
+    animation: none;
+  }
+}
+
+/* High contrast mode adjustments */
+@media (prefers-contrast: high) {
+  .fantasy-btn {
+    border-width: 3px;
+    border-color: var(--neutral-900);
+  }
+  
+  .rune-card {
+    border-width: 3px;
+    border-color: var(--neutral-800);
+  }
+  
+  .fantasy-toggle {
+    border-width: 3px;
+    border-color: var(--neutral-900);
+  }
+}

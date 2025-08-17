@@ -1,0 +1,257 @@
+Projektbeschreibung – Aethel’s Forge
+
+1) Vision & Zielsetzung
+
+Aethel’s Forge ist eine textgetriebene, KI-moderierte RPG‑Erfahrung im Browser. Die App vereint komfortables Onboarding, balancierte Charakter‑Generierung, dynamische Szenarien und KI‑gesteuerte Spielleitung zu einer wunderschönen, schnellen und stabilen Anwendung. Ziel ist die bestmögliche Single‑/Hot‑Seat‑RPG‑Session ohne menschlichen Dungeon Master – mit optionalen, stimmungsvollen AI‑Portraits & Karten.
+
+Leitprinzipien
+
+- Play first: minimale Hürden bis zum ersten Spielzug
+- Beautiful by default: edles, ruhiges Fantasy‑UI mit Liebe zum Detail
+- Deterministisch genug: validierte KI‑Outputs, Seeds und Reprozierbarkeit
+- Offline‑freundlich: lokale Persistenz, klare Export/Import‑Wege
+
+2) Kern-Features
+
+Onboarding & Szenarien
+- Geführter Wizard: Genre, Setting, Magie/Tech‑Level, Klima, Konflikt, Spieleranzahl, Klassen, Startwaffen
+- 3 automatisch generierte Start‑Szenarien (Titel, Hook, kurze Weltbeschreibung)
+- Auswahl → unmittelbarer Spielstart (Starttext, Startkarte, initiale Quests)
+
+Charakter‑Generierung
+- Ausgewogene Stats, klare Rollen (keine „OP“-Builds), Traits/Skills/Inventar
+
+
+Projektbeschreibung – Aethel’s Forge
+
+1) Vision & Zielsetzung
+
+Aethel’s Forge ist eine textgetriebene, KI‑moderierte RPG‑Erfahrung im Browser. Die App vereint komfortables Onboarding, balancierte Charakter‑Generierung, dynamische Szenarien und KI‑gesteuerte Spielleitung zu einer wunderschönen, schnellen und stabilen Anwendung. Ziel ist die bestmögliche Single‑/Hot‑Seat‑RPG‑Session ohne menschlichen Dungeon Master – mit optionalen, stimmungsvollen AI‑Portraits & Karten.
+
+Leitprinzipien
+
+- Play first: minimale Hürden bis zum ersten Spielzug
+- Beautiful by default: edles, ruhiges Fantasy‑UI mit Liebe zum Detail
+- Deterministisch genug: validierte KI‑Outputs, Seeds und Reproduzierbarkeit
+- Offline‑freundlich: lokale Persistenz, klare Export/Import‑Wege
+
+2) Kern‑Features
+
+Onboarding & Szenarien
+- WorldBuilder‑Wizard: Genre, Setting, Magie/Tech‑Level, Klima, Konflikt, Spieleranzahl, Klassen, Startwaffen
+- 3 automatisch generierte Start‑Szenarien (Titel, Hook, Kurzbeschreibung)
+- Kampagnenauswahl: vordefinierte Abenteuer (Schwierigkeit, Tags) wählbar
+- Auswahl → unmittelbarer Spielstart (Starttext, optionale Startkarte, initiale Quests)
+
+Charakter‑Generierung
+- Ausgewogene Stats, klare Rollen (keine „OP“-Builds), Traits/Skills/Inventar
+- Automatische Backstories als Flavor
+- Portrait‑Seeds pro Charakter (reproduzierbare Bilder)
+
+Gameplay‑Loop
+- ChatWindow/Story‑Panel (DM‑Text), SidePanel (Tabs), Input‑Bar (Freitext)
+- KI fasst Spieleraktionen zusammen, aktualisiert Welt/Charaktere, liefert die nächste Szene
+- Director‑Hinweise (Pacing/Spotlight) fließen in Antworten ein
+- Quests/Items/Status werden dynamisch gepflegt
+
+AI‑Bilder (optional)
+- Charakter‑Portraits & Weltkarten (illustrativ, reproduzierbar via Seed)
+- Gemeinsame Negativ‑Prompts/Guidelines für Style‑Kohärenz
+
+Quality‑of‑Life
+- AI Director (Pacing/Spotlight‑Ausgleich)
+- Visueller 3D‑Dice‑Roller Overlay (optional)
+- Autoload/Autosave, Export/Import (JSON), Kampagnen‑Load‑Screen
+- Geführtes Tutorial (non‑intrusiv)
+- Optional: Spracherkennung/Text‑to‑Speech
+
+3) Design & UX
+
+Look & Feel
+- Ruhiges Fantasy‑Thema (dunkle, warme Neutrals; Akzentfarben je nach Story‑Spannung)
+- Flat‑Art Illustrationen; dezente Pastelltöne; Farbe intensiviert sich mit Fortschritt
+- Subtile Animationen; Tailwind Design‑System
+
+Informationsarchitektur
+- Main Layout: ChatWindow/Story (links), SidePanel (rechts), Input‑Bar (unten)
+- SidePanel Tabs: Charakter, Inventar, Fähigkeiten & Zauber, Quests, Director, Würfel
+- Header: Kampagnenname, Save/Load/Export/Import, Sprache, Einstellungen
+- Tutorial‑Overlay: kontextuelle Schritte + optionale Auto‑Aktionen
+
+4) Technologie‑Stack
+
+- Frontend: Next.js (App Router, React 19, TypeScript)
+- UI: Tailwind CSS (Basis). Optional: shadcn/ui, lucide‑react, Framer Motion
+- State: Zustand (persistenter globaler Store) + zod für Schema‑Validierung
+- LLM: OpenRouter (openai/gpt-oss-20b:free) – Tool/Function‑Calls (Streaming optional)
+- Persistenz: LocalStorage/IndexedDB; Datei‑Export/Import (JSON)
+- Audio/3D: howler.js (SFX), three.js + cannon‑es (Dice) – optional
+- Testing: Vitest (Unit), Playwright (E2E)
+- CI/CD: GitHub Actions (lint/test/build), Vercel/Netlify Deploy
+
+5) Architektur & Module
+
+High‑Level
+- App (Next.js) – Routen, Layouts, App Router
+- Engine (Hook + Services) – Spiel‑Orchestrierung, Director, Dice, Persistence
+- AI‑Gateway – OpenRouter Service (Text), Image‑Adapter (ComfyUI)
+- UI – Komponenten (ChatWindow, SidePanel, VisualDice), Seiten, Dialoge
+
+Wesentliche Verzeichnisse (nach „Aethel’s Forge“ Struktur)
+- app/ – Routen: `page.tsx` (Play), `settings/page.tsx` (Einstellungen), Layout/Styles
+- app/api/ – Server‑Routen: `ai/*` (Next‑Turn, Szenarien, Bilder), `dice` (Würfel)
+- app/components/ – UI: ChatWindow, Sidepanel (Tabs), VisualDice, Wizard, Modals
+- lib/ai/ – OpenRouter‑Client, Prompts (`prompts.ts`), Output‑Guardrails
+- lib/engine/ – Dice‑Engine (deterministisch), Director‑Logik/Tools
+- lib/state/ – Globaler Zustand (Zustand‑Store, persist)
+- schemas/ – zod: Character, Scenario, Turn, Effects, DiceRequest/Result, GameState
+- data/ – vordefinierte Kampagnen, Tutorial‑Schritte (optional)
+- public/ – Assets
+- tests/ – Vitest (unit) & Playwright (e2e)
+
+State‑Machine (vereinfacht)
+- INIT → CAMPAIGN_SELECTION | LOAD_CAMPAIGN → WORLD_CREATION → GENERATING_SCENARIOS → SCENARIO_SELECTION → STARTING_GAME → PLAYING
+- PLAYING ↔ (AI_CALL → VALIDATE (zod) → APPLY_UPDATES (effects) → RENDER) ↔ PLAYING
+- PLAYING → SAVE/LOAD/EXPORT/IMPORT ↔ PLAYING → END
+
+6) Datenmodell (Auszug)
+
+Character (reich)
+- id, name, class, level, stats{str,dex,int,con,wis,cha}, hp/mp, traits[], skills[], inventory[], conditions[], portraitUrl, portraitSeed
+
+Player (laufzeit‑minimal, UI)
+- id, name, cls, hp, mp, stats:Record<string,number>, portraitUrl?, portraitSeed?
+
+Scenario
+- id, title, hook/summary, world{biome, magic, tech, climate, factions}, objectives[], mapSeed, difficulty
+
+GameState
+- selections (Wizard‑Auswahl inkl. scenario), party[Player], history (DM/Player), inventory[], quests[], rngSeed, map{seed, imageUrl}
+
+Message/Turn
+- role: system|dm|player|tool, content, toolCalls[], delta, ts
+
+7) Prompting & Tool‑Calls
+
+System Persona
+- „Aethel“: fairer, spannungsbewusster DM (rules‑light), nutzt Tools verantwortungsvoll, bevorzugt konkrete, handlungsrelevante Antworten.
+
+Tools (Funktionsschnittstellen)
+- updateCharacter({id, patch}) – HP/MP/Stats/Conditions/Inventory anpassen (führt zu Effects)
+- requestDiceRoll({formula, reason}) – Rückgabe {formula, result, detail} (deterministische Seeds)
+- createVision({type:'portrait'|'map', prompt, seed}) – Bildanforderung (ComfyUI)
+
+Output‑Guardrails
+- zod‑Validierung der Tool‑Argumente und Responses
+- Strikte JSON‑Segmente für strukturierte Updates; Rest als Narrative
+
+Director‑Notes
+- Pacing (Konflikt einstreuen, Wechsel Exploration ⟷ Social ⟷ Combat)
+- Spotlight (vernachlässigte Charaktere aktivieren)
+
+8) Bild‑Pipeline (optional)
+
+Standard & Endpunkte: ComfyUI‑Adapter (http://127.0.0.1:8188)
+- POST /api/ai/img/generate → {prompt, seed, width/height} ⇒ {promptId}
+- GET  /api/ai/img/result?promptId=… ⇒ {status, images[]}
+- Gemeinsame Negativ‑Prompts (Anatomie‑Fehler, Wasserzeichen, Low‑Res)
+- Seed‑Strategie: pro Charakter/Map wird Seed gespeichert → Re‑Render möglich
+- Caching: Hash (prompt, negatives, seed, workflow) → Avoid Duplicates
+- Austauschbar: weiterer Adapter (SD API, lokale Engines)
+
+9) Persistenz & Dateiverwaltung
+
+- Autosave (Zustand‑persist) + manueller Save im UI
+- Export/Import als JSON: GameState, Logs, Seeds, Image‑Refs
+- Kampagnen‑Load‑Screen: Liste gespeicherter Spiele, Export einzelner Saves
+- Recovery: Transaktionslog pro Turn (Roadmap)
+
+10) Sicherheit, Datenschutz, Robustheit
+
+- Kein PII‑Zwang; lokale Speicherung (opt‑in Cloud‑Backup später)
+- Rate‑Limiting & Backoff für LLM‑Requests
+- Content‑Filter: NSFW/Hate via Prompting & Post‑Checks
+- Schema‑Validation gegen „halluzinierte“ Strukturupdates
+
+11) Performance & Kostenkontrolle
+
+- (Optional) LLM‑Streaming
+- Dedizierte Prompt‑Templates (knapp, fokussiert, mit Kontext‑Summarizer)
+- Turn‑Summaries (Verdichtung des Verlaufs, um Tokens zu sparen)
+
+12) Routen & APIs (aktuell)
+
+Pages
+- / (Play‑Oberfläche mit Onboarding/Wizard integriert)
+- /settings (Einstellungen)
+
+APIs
+- POST /api/ai/next-turn – Input → LLM → Tool‑Calls → Updates (zod‑validiert)
+- POST /api/ai/generate-scenarios – (optional) Szenarien‑Generator
+- POST /api/dice – deterministischer Würfelservice (Seed optional)
+
+13) Einstellungen
+
+- Sprache (DE/EN, erweiterbar)
+- Autosave‑Intervall, Bilder an/aus, Sound an/aus
+- Schwierigkeitsgrad (Fehlerverzeihung, Gegnerstärke)
+- Visual Dice an/aus
+
+14) Teststrategie
+
+- Unit: Engine (Dice, Director), Services (OpenRouter, Image), Store‑Mutationen
+- Contract: Tool‑Schemas (zod), Mock‑LLM
+- E2E: Onboarding → Turn → Save/Load → Export/Import (Playwright)
+- Setup: Vitest + Playwright eingerichtet; Tests getrennt von Next TS‑Build
+
+15) Roadmap (Milestones)
+
+M0 – Prototype (2–3 Wochen)
+- Onboarding → 3 Szenarien, 1‑Char‑Party, einfacher Turn‑Loop, Local Save
+
+M1 – Core (3–4 Wochen)
+- Volle Party, Director, Visual Dice, Portrait‑Adapter, Validations, Settings
+
+M2 – Polish (3–4 Wochen)
+- Karten‑Adapter, Tutorial, i18n, Performance‑Pass, Export/Import, Theming
+
+M3 – Deluxe
+- Hot‑Seat, Galerie, PDF‑Exporter, Cloud‑Sync (opt‑in), Erweiterte Encounters
+
+16) Definition of Done (Akzeptanzkriterien)
+
+- Onboarding erzeugt verlässlich 3 konsistente Szenarien
+- Charaktere sind balanciert, Portraits/Seeds reproduzierbar
+- Turn‑Loop: Input → (LLM + Tools) → validierte Updates → Render stabil < 3s P50
+- Saves laden zuverlässig denselben Zustand; Export/Import 1:1 kompatibel
+- Accessibility: Kontraste, Screenreader‑Label, Tastaturnavigation
+- Keine Blocker in CI; 90%+ Kernabdeckung Engine/Services
+
+17) Konfiguration – OpenRouter (LLM)
+
+- Model: openai/gpt-oss-20b:free
+- Headers: Authorization: Bearer <OPENROUTER_API_KEY>
+- Features: Tool‑Calls; Temperature 0.7 (Story), 0.3 (Schema)
+- Budget‑Guards: Token‑Limits, aggressive Summaries, Retry‑Cap
+
+18) Risikolog & Mitigations
+
+- LLM driftet von Schema ab → zod‑Retry, strikte Tool‑Guidelines
+- Kosten → Token‑Budget pro Turn, harte Abbrüche, lokale Caches
+- Performance → SSR/Lazy, (Streaming optional), Minifizierung, Code‑Splitting
+
+19) Ausblick
+
+- Koop‑Modus (Co‑DM), Encounter‑Editor, Homebrew‑Rules, Mod‑Schnittstelle
+- Bewertete Community‑Seeds (Szenarien/Maps), Kuratierte Starterpacks
+
+20) Struktur‑Update (aus Legacy „Aethel’s Forge“ übernommen)
+
+- SidePanel‑Tabs: Charakter, Inventar, Fähigkeiten & Zauber, Quests, Karte, Director, Würfel
+- VisualDiceRoller (Overlay) + dedizierter Dice‑API‑Endpoint
+- Kampagnen‑Auswahl (vordefinierte Abenteuer) + WorldBuilder Wizard
+- Save/Load/Export/Import UI (Kampagnen‑Load‑Screen)
+- Hook‑Zentrale `useGameEngine` (Client) – Planung/Ausbau
+Karten‑Adapter, Tutorial, i18n, Performance‑Pass, Export/Import, Theming
+
+

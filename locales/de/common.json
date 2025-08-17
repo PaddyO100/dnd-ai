@@ -1,0 +1,113 @@
+{
+  "settings": {
+    "title": "Einstellungen",
+    "subtitle": "Passe Aethel's Forge an deine Vorlieben an und optimiere dein Spielerlebnis",
+    "changesAutosaved": "Änderungen wurden automatisch gespeichert",
+    "language": {
+      "title": "Sprache & Lokalisierung",
+      "subtitle": "Wähle deine bevorzugte Sprache für die Benutzeroberfläche",
+      "label": "Sprache",
+      "german": "🇩🇪 Deutsch",
+      "english": "🇺🇸 English",
+      "description": "Bestimmt die Sprache für Menüs und System-Nachrichten"
+    },
+    "gameplay": {
+      "title": "Gameplay Einstellungen",
+      "subtitle": "Konfiguriere das Spielverhalten und die Schwierigkeit",
+      "difficulty": {
+        "label": "Schwierigkeitsgrad",
+        "easy": "🟢 Leicht - Fehlerverzeihend, mehr Ressourcen",
+        "normal": "🟡 Normal - Ausgewogenes Gameplay",
+        "hard": "🔴 Schwer - Herausfordernd, weniger Ressourcen",
+        "description": "Beeinflusst Kampfschwierigkeit und Ressourcenverfügbarkeit"
+      },
+      "autosave": {
+        "label": "Autosave Intervall",
+        "minutes1": "1 Minute",
+        "minutes3": "3 Minuten",
+        "minutes5": "5 Minuten",
+        "minutes10": "10 Minuten",
+        "disabled": "Deaktiviert",
+        "description": "Wie oft dein Spielstand automatisch gespeichert wird"
+      }
+    },
+    "audioVisual": {
+      "title": "Audio & Visuelle Effekte",
+      "subtitle": "Konfiguriere Sounds und visuelle Verbesserungen",
+      "soundEffects": {
+        "title": "Soundeffekte",
+        "description": "Würfelgeräusche und Umgebungssounds"
+      },
+      "visualDice": {
+        "title": "Visuelle Würfel",
+        "description": "3D-Würfel-Animation bei Würfelwürfen"
+      },
+      "theme": {
+        "label": "Theme",
+        "light": "☀️ Hell",
+        "dark": "🌙 Dunkel",
+        "aethel": "⚔️ Aethel's Forge",
+        "mystic": "🔮 Mystische Wälder",
+        "dragon": "🐉 Drachenhort",
+        "description": "Bestimmt das Erscheinungsbild der Benutzeroberfläche"
+      },
+      "audio": {
+        "title": "Audio Einstellungen",
+        "description": "Konfiguriere Soundeffekte und Audio-Einstellungen",
+        "masterVolume": "Hauptlautstärke",
+        "diceVolume": "Würfel-Sound Lautstärke",
+        "ambientVolume": "Umgebungslautstärke",
+        "uiVolume": "UI-Sound Lautstärke"
+      }
+    },
+    "ai": {
+      "title": "KI Einstellungen",
+      "subtitle": "Konfiguriere das KI-Modell und Verhalten",
+      "model": {
+        "label": "KI-Modell",
+        "gpt4": "🚀 GPT-4 (Beste Qualität)",
+        "gpt35": "⚡ GPT-3.5 (Schneller)",
+        "claude": "🧠 Claude (Kreativ)",
+        "local": "💻 Lokal (Privat)",
+        "description": "Bestimmt welches KI-Modell für Spielführung verwendet wird"
+      },
+      "privacy": {
+        "title": "🔒 Datenschutz-Hinweis",
+        "description": "Alle Spieleingaben werden nur zur Spiel-KI übertragen. Keine dauerhaften Daten werden ohne deine Zustimmung gespeichert."
+      }
+    },
+    "dataManagement": {
+      "title": "Datenmanagement",
+      "subtitle": "Importiere, exportiere oder setze Einstellungen zurück",
+      "export": "Exportieren",
+      "import": "Importieren",
+      "reset": "Zurücksetzen",
+      "resetConfirm": {
+        "title": "Einstellungen zurücksetzen?",
+        "description": "Alle Einstellungen werden auf die Standardwerte zurückgesetzt. Diese Aktion kann nicht rückgängig gemacht werden.",
+        "cancel": "Abbrechen",
+        "confirm": "Zurücksetzen"
+      }
+    },
+    "backToGame": "Zurück zum Spiel",
+    "importError": "Fehler beim Importieren der Einstellungen. Bitte überprüfe die Datei.",
+    "difficultyImpact": {
+      "title": "Schwierigkeitsauswirkungen",
+      "easy": "Mehr Heiltränke, einfachere Fähigkeitsprüfungen, reduzierter Gegnerschaden",
+      "normal": "Ausgewogene Ressourcen und Gegnerbegegnungen",
+      "hard": "Begrenzte Ressourcen, schwerere Fähigkeitsprüfungen, erhöhter Gegnerschaden"
+    },
+    "themePreview": "Theme wird sofort angewendet",
+    "settingsApplied": "Einstellungen wurden erfolgreich angewendet"
+  },
+  "common": {
+    "loading": "Laden...",
+    "error": "Fehler",
+    "success": "Erfolg",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "close": "Schließen"
+  }
+}
