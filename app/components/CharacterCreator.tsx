@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Character, Skill } from '@/schemas/character';
+import { Character, Skill, Race, Gender, CharacterClass } from '@/schemas/character';
 import { 
   generateCharacter, 
   characterClasses, 
@@ -10,6 +10,9 @@ import {
   calculatePointBuyCost 
 } from '@/lib/character/characterGenerator';
 import { skillDefinitions, SkillName } from '@/lib/character/skillSystem';
+import { getRaceDisplayName, getGenderDisplayName } from '@/lib/character/portraitSystem';
+import { getClassWeaponInfo } from '@/lib/character/classWeaponSystem';
+import PortraitSelector from './PortraitSelector';
 
 interface CharacterCreatorProps {
   onCharacterCreated: (character: Character) => void;
@@ -23,7 +26,9 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
   
   // Character data
   const [name, setName] = useState('');
-  const [selectedClass, setSelectedClass] = useState('');
+  const [selectedClass, setSelectedClass] = useState<CharacterClass>('warrior');
+  const [selectedRace, setSelectedRace] = useState<Race>('human');
+  const [selectedGender, setSelectedGender] = useState<Gender>('male');
   const [statMethod, setStatMethod] = useState<'point_buy' | 'rolled' | 'standard_array'>('point_buy');
   const [stats, setStats] = useState<StatDistribution>({
     strength: 8, dexterity: 8, constitution: 8,
@@ -34,6 +39,7 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
   
   const steps = [
     { title: 'Name & Klasse', description: 'Grundlegende Charakterinformationen' },
+    { title: 'Rasse & Portrait', description: 'Rasse und Aussehen wählen' },
     { title: 'Attribute', description: 'Verteilung der Charakterwerte' },
     { title: 'Fertigkeiten', description: 'Zusätzliche Fähigkeiten wählen' },
     { title: 'Hintergrund', description: 'Charaktergeschichte und Details' },
@@ -65,6 +71,8 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
       }
 
       const character = await generateCharacter(name.trim(), selectedClass, {
+        race: selectedRace,
+        gender: selectedGender,
         statMethod,
         generateBackstory,
         customStats: statMethod === 'point_buy' ? stats : undefined
@@ -112,7 +120,7 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
                 {Object.entries(characterClasses).map(([key, classData]) => (
                   <button
                     key={key}
-                    onClick={() => setSelectedClass(key)}
+                    onClick={() => setSelectedClass(key as CharacterClass)}
                     className={`p-4 rounded-lg border-2 text-left transition-all ${
                       selectedClass === key
                         ? 'border-amber-400 bg-amber-50'
@@ -131,6 +139,20 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
                         </span>
                       ))}
                     </div>
+                    {/* Show weapon restrictions for selected class */}
+                    {selectedClass === key && (
+                      <div className="mt-3 p-2 bg-blue-50 rounded text-xs">
+                        {(() => {
+                          const weaponInfo = getClassWeaponInfo(key as CharacterClass);
+                          return (
+                            <div>
+                              <div><strong>Primärwaffen:</strong> {weaponInfo.weaponRestrictions.primary.slice(0, 3).join(', ')}{weaponInfo.weaponRestrictions.primary.length > 3 ? '...' : ''}</div>
+                              <div className="mt-1"><strong>Verboten:</strong> {weaponInfo.weaponRestrictions.forbidden.slice(0, 2).join(', ')}{weaponInfo.weaponRestrictions.forbidden.length > 2 ? '...' : ''}</div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
                   </button>
                 ))}
               </div>
@@ -139,6 +161,24 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
         );
 
       case 1:
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-6">
+              <h3 className="text-lg font-semibold mb-2">Rasse und Portrait</h3>
+              <p className="text-gray-600">Wähle die Rasse deines Charakters und sein Aussehen</p>
+            </div>
+            
+            <PortraitSelector
+              selectedClass={selectedClass}
+              selectedRace={selectedRace}
+              selectedGender={selectedGender}
+              onRaceChange={setSelectedRace}
+              onGenderChange={setSelectedGender}
+            />
+          </div>
+        );
+
+      case 2:
         return (
           <div className="space-y-6">
             <div>
@@ -219,7 +259,7 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
           </div>
         );
 
-      case 2:
+      case 3:
         const availableSkills = Object.entries(skillDefinitions)
           .filter(([skillName]) => 
             selectedClass && 
@@ -284,7 +324,7 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
           </div>
         );
 
-      case 3:
+      case 4:
         return (
           <div className="space-y-6">
             <div>
@@ -326,7 +366,7 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
           </div>
         );
 
-      case 4:
+      case 5:
         const classData = selectedClass ? characterClasses[selectedClass] : null;
         
         return (
@@ -339,6 +379,8 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
                   <h4 className="font-semibold mb-2">Grunddaten</h4>
                   <p><strong>Name:</strong> {name}</p>
                   <p><strong>Klasse:</strong> {classData?.name}</p>
+                  <p><strong>Rasse:</strong> {getRaceDisplayName(selectedRace)}</p>
+                  <p><strong>Geschlecht:</strong> {getGenderDisplayName(selectedGender)}</p>
                   <p><strong>Methode:</strong> {
                     statMethod === 'point_buy' ? 'Point-Buy' :
                     statMethod === 'standard_array' ? 'Standard Array' : 'Gewürfelt'
@@ -450,7 +492,7 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
                   setError('Name und Klasse sind erforderlich');
                   return;
                 }
-                if (step === 1 && statMethod === 'point_buy' && !pointBuyValidation.valid) {
+                if (step === 2 && statMethod === 'point_buy' && !pointBuyValidation.valid) {
                   setError('Ungültige Attributsverteilung');
                   return;
                 }
@@ -458,7 +500,7 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
                 setStep(s => s + 1);
               }}
               disabled={(step === 0 && (!name.trim() || !selectedClass)) || 
-                       (step === 1 && statMethod === 'point_buy' && !pointBuyValidation.valid)}
+                       (step === 2 && statMethod === 'point_buy' && !pointBuyValidation.valid)}
               className="px-6 py-2 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-amber-500 text-white hover:bg-amber-600"
             >
               Weiter

@@ -1,9 +1,13 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import Image from "next/image";
 import { useGameStore, type Scenario, type Player } from "@/lib/state/gameStore";
+import { getAllRaces, getAllGenders, getRaceDisplayName, getGenderDisplayName, getPortraitUrl, getAllCharacterClasses, getClassDisplayName } from "@/lib/character/portraitSystem";
+import { getRaceInfo, getRacialTraits } from "@/lib/character/raceSystem";
+import type { Race, Gender, CharacterClass } from "@/schemas/character";
 
-type WorldPrefs = { magic: string; climate: string };
+type WorldPrefs = { magic: string; tech: string; climate: string };
 
 const genres = ["Fantasy", "Sci-Fi", "Steampunk", "Cyberpunk", "Mystic"];
 const frames = ["Heroisch", "Grimdark", "Entdeckung", "Intrige", "Überleben"];
@@ -27,12 +31,26 @@ export default function OnboardingWizard() {
 	const [step, setStep] = useState<number>(1);
 	const [localGenre, setLocalGenre] = useState<string>(selections.genre || genres[0]);
 	const [localFrame, setLocalFrame] = useState<string>(selections.frame || frames[0]);
-	const [world, setWorld] = useState<WorldPrefs>(
-		selections.world || { magic: magicLevels[1], climate: climates[0] }
-	);
+	const [world, setWorld] = useState<WorldPrefs>(() => {
+		const defaultWorld = { magic: magicLevels[1], tech: "Mittelalter", climate: climates[0] };
+		if (selections.world) {
+			const savedWorld = selections.world as Partial<WorldPrefs>;
+			return {
+				magic: savedWorld.magic || defaultWorld.magic,
+				tech: "Mittelalter", // Always Medieval
+				climate: savedWorld.climate || defaultWorld.climate
+			};
+		}
+		return defaultWorld;
+	});
 	const [conflict, setConflict] = useState<string>(selections.conflict || "");
 	const [players, setPlayers] = useState<number>(selections.players || 3);
 	const [classes, setClasses] = useState<string[]>(selections.classes?.length ? selections.classes : [classOptions[0], classOptions[1]]);
+
+	// Character Creation State
+	const [selectedRace, setSelectedRace] = useState<Race | null>(null);
+	const [selectedGender, setSelectedGender] = useState<Gender | null>(null);
+	const [selectedClass, setSelectedClass] = useState<CharacterClass | null>(null);
 
 	const [scenarios, setScenarios] = useState<Scenario[] | null>(null);
 	const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(selections.scenario || null);
@@ -47,13 +65,16 @@ export default function OnboardingWizard() {
 		if (step === 3) return conflict.trim().length > 5; // etwas sinnvolles
 		if (step === 4) return players >= 1 && classes.length >= 1;
 		if (step === 5) return Boolean(selectedScenario);
+		if (step === 6) return Boolean(selectedClass);
+		if (step === 7) return Boolean(selectedRace);
+		if (step === 8) return Boolean(selectedGender);
 		return true;
-	}, [step, localGenre, localFrame, world, conflict, players, classes, selectedScenario]);
+	}, [step, localGenre, localFrame, world, conflict, players, classes, selectedScenario, selectedClass, selectedRace, selectedGender]);
 
 	const advance = () => {
 		if (!canContinue) return;
 		setError(null);
-		setStep((s) => Math.min(5, s + 1));
+		setStep((s) => Math.min(8, s + 1));
 	};
 	const back = () => setStep((s) => Math.max(1, s - 1));
 
@@ -124,7 +145,15 @@ export default function OnboardingWizard() {
 			const res = await fetch("/api/ai/generate-characters", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ players, classes }),
+				body: JSON.stringify({ 
+					players, 
+					classes,
+					playerCharacter: selectedClass && selectedRace && selectedGender ? {
+						class: selectedClass,
+						race: selectedRace,
+						gender: selectedGender
+					} : null
+				}),
 			});
 			setProgress(65);
 			if (!res.ok) {
@@ -221,6 +250,9 @@ export default function OnboardingWizard() {
 							<Picker label="Magie" value={world.magic} options={magicLevels} onChange={(v) => setWorld((w) => ({ ...w, magic: v }))} />
 							<Picker label="Klima" value={world.climate} options={climates} onChange={(v) => setWorld((w) => ({ ...w, climate: v }))} />
 						</div>
+						<p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+							Technologie-Level: Mittelalter (Fantasy-Setting)
+						</p>
 					</section>
 				)}
 
@@ -305,6 +337,108 @@ export default function OnboardingWizard() {
 					</section>
 				)}
 
+				{step === 6 && (
+					<section className="space-y-4">
+						<h2 className="text-xl font-semibold">Klasse wählen</h2>
+						<p className="text-sm opacity-80">Wählen Sie eine Klasse für Ihren Hauptcharakter:</p>
+						<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+							{getAllCharacterClasses().map((cls) => (
+								<button
+									key={cls}
+									onClick={() => setSelectedClass(cls)}
+									className={
+										"rounded-xl p-4 border text-left transition " +
+										(selectedClass === cls
+											? "border-indigo-500 bg-indigo-50/60 dark:bg-indigo-900/20"
+											: "border-black/10 dark:border-white/10 bg-white/70 dark:bg-black/30 hover:border-indigo-400")
+									}
+								>
+									<h3 className="font-semibold mb-1">{getClassDisplayName(cls)}</h3>
+									<p className="text-sm opacity-80">Spezialist für {cls === 'warrior' ? 'Nahkampf und Verteidigung' : cls === 'mage' ? 'arkane Magie und Sprüche' : cls === 'rogue' ? 'Heimlichkeit und Finesse' : cls === 'bard' ? 'Inspiration und Vielseitigkeit' : cls === 'paladin' ? 'göttliche Kraft und Schutz' : cls === 'ranger' ? 'Wildnis und Fernkampf' : cls === 'druid' ? 'Naturmagie und Verwandlung' : cls === 'monk' ? 'innere Kraft und Beweglichkeit' : 'okkulte Macht und Pakte'}</p>
+								</button>
+							))}
+						</div>
+					</section>
+				)}
+
+				{step === 7 && (
+					<section className="space-y-4">
+						<h2 className="text-xl font-semibold">Rasse wählen</h2>
+						<p className="text-sm opacity-80">Wählen Sie eine Rasse für Ihren Charakter:</p>
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+							{getAllRaces().map((race) => {
+								const raceInfo = getRaceInfo(race);
+								const traits = getRacialTraits(race);
+								return (
+									<button
+										key={race}
+										onClick={() => setSelectedRace(race)}
+										className={
+											"rounded-xl p-4 border text-left transition " +
+											(selectedRace === race
+												? "border-indigo-500 bg-indigo-50/60 dark:bg-indigo-900/20"
+												: "border-black/10 dark:border-white/10 bg-white/70 dark:bg-black/30 hover:border-indigo-400")
+										}
+									>
+										<h3 className="font-semibold mb-1">{getRaceDisplayName(race)}</h3>
+										<p className="text-sm opacity-80 mb-2">{raceInfo.description}</p>
+										<div className="text-xs opacity-70">
+											<span className="font-medium">Fähigkeiten:</span> {traits.slice(0, 2).map(t => t.name).join(', ')}
+											{traits.length > 2 && ` +${traits.length - 2} weitere`}
+										</div>
+									</button>
+								);
+							})}
+						</div>
+					</section>
+				)}
+
+				{step === 8 && (
+					<section className="space-y-4">
+						<h2 className="text-xl font-semibold">Geschlecht & Portrait</h2>
+						<p className="text-sm opacity-80">Wählen Sie das Geschlecht für Ihren Charakter:</p>
+						
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+							{getAllGenders().map((gender) => (
+								<button
+									key={gender}
+									onClick={() => setSelectedGender(gender)}
+									className={
+										"rounded-xl p-4 border text-center transition " +
+										(selectedGender === gender
+											? "border-indigo-500 bg-indigo-50/60 dark:bg-indigo-900/20"
+											: "border-black/10 dark:border-white/10 bg-white/70 dark:bg-black/30 hover:border-indigo-400")
+									}
+								>
+									<h3 className="font-semibold">{getGenderDisplayName(gender)}</h3>
+								</button>
+							))}
+						</div>
+
+						{selectedClass && selectedRace && selectedGender && (
+							<div className="mt-6 text-center">
+								<h3 className="font-semibold mb-4">Ihr Charakter-Portrait</h3>
+								<div className="inline-block">
+									<Image 
+										src={getPortraitUrl(selectedClass, selectedRace, selectedGender)}
+										alt={`${getRaceDisplayName(selectedRace)} ${getClassDisplayName(selectedClass)} (${getGenderDisplayName(selectedGender)})`}
+										width={128}
+										height={128}
+										className="w-32 h-32 rounded-xl border-4 border-indigo-500"
+										onError={(e) => {
+											// Fallback if portrait doesn't exist
+											e.currentTarget.src = '/portraits/placeholder.svg';
+										}}
+									/>
+									<p className="text-sm opacity-80 mt-2">
+										{getGenderDisplayName(selectedGender)}er {getRaceDisplayName(selectedRace)} {getClassDisplayName(selectedClass)}
+									</p>
+								</div>
+							</div>
+						)}
+					</section>
+				)}
+
 				<FooterNav
 					step={step}
 					canContinue={canContinue}
@@ -314,7 +448,10 @@ export default function OnboardingWizard() {
 					onContinue={() => {
 						if (step < 4) return advance();
 						if (step === 4) return generateScenarios();
-						if (step === 5) return confirmScenarioAndGenerateCharacters();
+						if (step === 5) return advance(); // Move to character creation
+						if (step === 6) return advance(); // Move to race selection
+						if (step === 7) return advance(); // Move to gender selection
+						if (step === 8) return confirmScenarioAndGenerateCharacters(); // Final step
 					}}
 					onGenerateScenarios={generateScenarios}
 					onConfirmScenario={confirmScenarioAndGenerateCharacters}
@@ -331,6 +468,9 @@ function StepIndicator({ step }: { step: number }) {
 		{ n: 3, t: "Konflikt" },
 		{ n: 4, t: "Spieler" },
 		{ n: 5, t: "Szenario" },
+		{ n: 6, t: "Klasse" },
+		{ n: 7, t: "Rasse" },
+		{ n: 8, t: "Charakter" },
 	];
 	return (
 		<ol className="flex items-center gap-2 mb-6">
@@ -444,7 +584,18 @@ function FooterNav({
 					</button>
 				)}
 
-				{step === 5 && (
+				{(step === 5 || step === 6 || step === 7) && (
+					<button
+						type="button"
+						onClick={onContinue}
+						disabled={!canContinue || isBusy}
+						className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+					>
+						{step === 5 ? "Charakter erstellen" : "Weiter"}
+					</button>
+				)}
+
+				{step === 8 && (
 					<button
 						type="button"
 						onClick={onConfirmScenario}

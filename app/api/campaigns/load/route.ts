@@ -13,6 +13,8 @@ function generateDefaultCharacters(campaign: Campaign): Character[] {
       id: `preset-${index}`,
       name: preset.name,
       cls: preset.class,
+      race: 'human' as const, // Default race for preset characters
+      gender: (index % 2 === 0) ? 'male' as const : 'female' as const, // Alternate gender
       hp: 20 + (preset.level - 1) * 6, // Simple HP calculation
       maxHp: 20 + (preset.level - 1) * 6,
       mp: 10 + (preset.level - 1) * 4, // Simple MP calculation
@@ -54,6 +56,8 @@ function generateDefaultCharacters(campaign: Campaign): Character[] {
     id: `char-${index}`,
     name: `${cls} ${index + 1}`,
     cls,
+    race: 'human' as const, // Default race
+    gender: (index % 2 === 0) ? 'male' as const : 'female' as const, // Alternate gender
     hp: 20,
     maxHp: 20,
     mp: 10,

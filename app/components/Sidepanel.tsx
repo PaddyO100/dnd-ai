@@ -398,13 +398,71 @@ function CharacterTab(props: {
             </svg>
             Charaktereigenschaften
           </h4>
-          <div className="space-y-2">
-            {traits.map((trait: any, i: number) => (
-              <div key={i} className="bg-purple-50 rounded-lg p-2 border border-purple-200">
-                <div className="font-medium text-purple-900">{trait.name}</div>
-                <p className="text-xs text-purple-700">{trait.description}</p>
+          <div className="space-y-3">
+            {/* Racial Traits */}
+            {traits.filter((trait: any) => trait.type === 'racial').length > 0 && (
+              <div>
+                <h5 className="text-xs font-semibold text-green-700 mb-1 uppercase tracking-wide">Rassenfähigkeiten</h5>
+                <div className="space-y-2">
+                  {traits.filter((trait: any) => trait.type === 'racial').map((trait: any, i: number) => (
+                    <div key={i} className="bg-green-50 rounded-lg p-2 border border-green-200">
+                      <div className="font-medium text-green-900 text-sm">{trait.name}</div>
+                      <p className="text-xs text-green-700 mt-1">{trait.description}</p>
+                      {trait.effects && trait.effects.length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {trait.effects.map((effect: any, ei: number) => (
+                            <span key={ei} className="text-[9px] bg-green-100 text-green-600 px-1 py-0.5 rounded">
+                              {effect.type}: {effect.value} {effect.target}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
+            )}
+            
+            {/* Class Traits */}
+            {traits.filter((trait: any) => trait.type === 'class').length > 0 && (
+              <div>
+                <h5 className="text-xs font-semibold text-blue-700 mb-1 uppercase tracking-wide">Klassenfähigkeiten</h5>
+                <div className="space-y-2">
+                  {traits.filter((trait: any) => trait.type === 'class').map((trait: any, i: number) => (
+                    <div key={i} className="bg-blue-50 rounded-lg p-2 border border-blue-200">
+                      <div className="font-medium text-blue-900 text-sm">{trait.name}</div>
+                      <p className="text-xs text-blue-700 mt-1">{trait.description}</p>
+                      {/* Special display for weapon restrictions */}
+                      {trait.name === 'Waffenbeherrschung' && trait.effects?.[0]?.condition && (
+                        <div className="mt-1 text-[10px] text-blue-600">
+                          <strong>Primärwaffen:</strong> {trait.effects[0].condition}
+                        </div>
+                      )}
+                      {trait.name === 'Waffenrestriktionen' && trait.effects?.[0]?.condition && (
+                        <div className="mt-1 text-[10px] text-red-600">
+                          <strong>Verboten:</strong> {trait.effects[0].condition}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Other Traits */}
+            {traits.filter((trait: any) => !trait.type || !['racial', 'class'].includes(trait.type)).length > 0 && (
+              <div>
+                <h5 className="text-xs font-semibold text-purple-700 mb-1 uppercase tracking-wide">Weitere Eigenschaften</h5>
+                <div className="space-y-2">
+                  {traits.filter((trait: any) => !trait.type || !['racial', 'class'].includes(trait.type)).map((trait: any, i: number) => (
+                    <div key={i} className="bg-purple-50 rounded-lg p-2 border border-purple-200">
+                      <div className="font-medium text-purple-900 text-sm">{trait.name}</div>
+                      <p className="text-xs text-purple-700 mt-1">{trait.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

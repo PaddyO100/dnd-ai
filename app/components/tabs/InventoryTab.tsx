@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import { useGameStore, type Player } from '@/lib/state/gameStore';
+import { getWeaponEfficiency, isWeaponAllowed } from '@/lib/character/classWeaponSystem';
 import type { InventoryItem } from '@/schemas/character';
+import type { CharacterClass } from '@/schemas/character';
 
 interface InventoryTabProps {
   player?: Player;
@@ -220,6 +222,45 @@ export default function InventoryTab({ player }: InventoryTabProps) {
                       {item.type === 'misc' && 'Sonstiges'}
                       {item.type === 'valuable' && 'Wertsache'}
                       {item.type === 'quest' && 'Questgegenstand'}
+                      
+                      {/* Weapon Proficiency Info */}
+                      {item.type === 'weapon' && player?.cls && (() => {
+                        try {
+                          // Convert class name to CharacterClass enum
+                          const classMap: Record<string, CharacterClass> = {
+                            'Krieger': 'warrior',
+                            'Magier': 'mage', 
+                            'Schurke': 'rogue',
+                            'Barde': 'bard',
+                            'Paladin': 'paladin',
+                            'Waldläufer': 'ranger',
+                            'Druide': 'druid',
+                            'Mönch': 'monk',
+                            'Hexenmeister': 'warlock'
+                          };
+                          
+                          const characterClass = classMap[player.cls] || 'warrior';
+                          const weaponType = isWeaponAllowed(characterClass, item.name);
+                          const efficiency = getWeaponEfficiency(characterClass, item.name);
+                          
+                          return (
+                            <div className={`inline-block ml-2 px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                              weaponType === 'primary' ? 'bg-green-100 text-green-700' :
+                              weaponType === 'secondary' ? 'bg-yellow-100 text-yellow-700' :
+                              weaponType === 'forbidden' ? 'bg-red-100 text-red-700' :
+                              'bg-gray-100 text-gray-600'
+                            }`}>
+                              {weaponType === 'primary' && '✓ Primär'}
+                              {weaponType === 'secondary' && '~ Sekundär'}
+                              {weaponType === 'forbidden' && '✗ Verboten'}
+                              {!['primary', 'secondary', 'forbidden'].includes(weaponType) && '? Unbekannt'}
+                              {efficiency !== 1.0 && ` (${Math.round(efficiency * 100)}%)`}
+                            </div>
+                          );
+                        } catch {
+                          return null;
+                        }
+                      })()}
                     </div>
                     
                     {item.description && (

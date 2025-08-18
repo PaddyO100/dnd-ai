@@ -1,5 +1,17 @@
 import { z } from 'zod'
 
+// Character Race definitions
+export const Race = z.enum(['human', 'orc', 'dark_elf', 'high_elf', 'wood_elf', 'dwarf'])
+
+// Character Gender definitions  
+export const Gender = z.enum(['male', 'female'])
+
+// Character Class definitions (alle 9 Klassen)
+export const CharacterClass = z.enum([
+  'warrior', 'mage', 'rogue', 'bard', 'paladin', 
+  'ranger', 'druid', 'monk', 'warlock'
+])
+
 export const Skill = z.object({
   name: z.string(),
   level: z.number().min(0).max(5),
@@ -20,7 +32,7 @@ export const Trait = z.object({
   description: z.string(),
   type: z.enum(['racial', 'class', 'background', 'special', 'feat']).optional(),
   effects: z.array(z.object({
-    type: z.enum(['stat_modifier', 'skill_bonus', 'damage_bonus', 'resistance', 'special_ability']),
+    type: z.enum(['stat_modifier', 'skill_bonus', 'damage_bonus', 'resistance', 'special_ability', 'spell']),
     value: z.union([z.number(), z.string()]),
     target: z.string().optional(), // What stat/skill this affects
     condition: z.string().optional() // When this effect applies
@@ -57,6 +69,8 @@ export const Character = z.object({
   id: z.string(),
   name: z.string(),
   cls: z.string(),
+  race: Race,
+  gender: Gender,
   hp: z.number(),
   maxHp: z.number().optional(),
   mp: z.number(),
@@ -107,6 +121,9 @@ export const Character = z.object({
 })
 
 export type Character = z.infer<typeof Character>
+export type Race = z.infer<typeof Race>
+export type Gender = z.infer<typeof Gender>
+export type CharacterClass = z.infer<typeof CharacterClass>
 export type Skill = z.infer<typeof Skill>
 export type Spell = z.infer<typeof Spell>
 export type Trait = z.infer<typeof Trait>

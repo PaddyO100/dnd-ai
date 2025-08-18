@@ -1,9 +1,12 @@
 // lib/character/characterGenerator.ts
 
-import { Character, Skill, Trait, InventoryItem } from '@/schemas/character';
+import { Character, Skill, Trait, InventoryItem, Race, Gender } from '@/schemas/character';
 import { skillDefinitions, SkillName } from './skillSystem';
 import { generateStartingGear } from './itemGenerator';
 import { generateAIBackstory } from './backstoryGenerator';
+import { applyRacialBonuses, getRacialTraits } from './raceSystem';
+import { getClassWeaponInfo } from './classWeaponSystem';
+import { getPortraitUrl } from './portraitSystem';
 
 export interface StatDistribution {
   strength: number;
@@ -575,6 +578,57 @@ export function generateTraits(className: string): Trait[] {
 }
 
 /**
+ * Generiert Waffenrestriktions-Traits basierend auf Klasse
+ */
+export function generateWeaponRestrictionTraits(className: string): Trait[] {
+  try {
+    // Check if className is a valid CharacterClass
+    const validClasses = ['warrior', 'mage', 'rogue', 'bard', 'paladin', 'ranger', 'druid', 'monk', 'warlock'];
+    const normalizedClass = className.toLowerCase();
+    
+    if (!validClasses.includes(normalizedClass)) {
+      return [];
+    }
+    
+    const weaponInfo = getClassWeaponInfo(normalizedClass as 'warrior' | 'mage' | 'rogue' | 'bard' | 'paladin' | 'ranger' | 'druid' | 'monk' | 'warlock');
+    
+    return [
+      {
+        name: "Waffenbeherrschung",
+        description: `Beherrschung der klassischen ${weaponInfo.displayName}-Waffen`,
+        type: "class" as const,
+        effects: [
+          {
+            type: "special_ability" as const,
+            value: "weapon_proficiency",
+            target: "primary_weapons",
+            condition: weaponInfo.weaponRestrictions.primary.join(', ')
+          }
+        ],
+        prerequisites: []
+      },
+      {
+        name: "Waffenrestriktionen",
+        description: `Einschränkungen bei der Nutzung bestimmter Waffen`,
+        type: "class" as const,
+        effects: [
+          {
+            type: "special_ability" as const,
+            value: "weapon_restriction",
+            target: "forbidden_weapons", 
+            condition: weaponInfo.weaponRestrictions.forbidden.join(', ')
+          }
+        ],
+        prerequisites: []
+      }
+    ];
+  } catch {
+    // Fallback if class not found in weapon system
+    return [];
+  }
+}
+
+/**
  * Generiert Startausrüstung basierend auf Klasse
  */
 export function generateStartingInventory(className: string): InventoryItem[] {
@@ -607,6 +661,8 @@ export async function generateCharacter(
   name: string,
   className: string,
   options: {
+    race?: Race;
+    gender?: Gender;
     statMethod?: 'point_buy' | 'rolled' | 'standard_array';
     generateBackstory?: boolean;
     customStats?: StatDistribution;
@@ -614,6 +670,8 @@ export async function generateCharacter(
   } = {}
 ): Promise<Character> {
   const {
+    race = 'human',
+    gender = 'male',
     statMethod = 'point_buy',
     generateBackstory = true,
     customStats,
@@ -621,11 +679,17 @@ export async function generateCharacter(
   } = options;
   
   const id = `char_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  const stats = customStats || generateStats(className, statMethod);
+  
+  // Generate base stats and apply racial modifiers
+  const baseStats = customStats || generateStats(className, statMethod);
+  const modifiedStats = applyRacialBonuses(baseStats, race);
+  
   const skills = generateStartingSkills(className);
   const traits = generateTraits(className);
+  const racialTraits = getRacialTraits(race);
+  const weaponRestrictionTraits = generateWeaponRestrictionTraits(className);
   const inventory = generateStartingInventory(className);
-  const derived = calculateDerivedStats(stats, className);
+  const derived = calculateDerivedStats(modifiedStats, className);
   
   // Generate physical attributes
   const physicalAttributes = generatePhysicalAttributes();
@@ -634,19 +698,22 @@ export async function generateCharacter(
     id,
     name,
     cls: characterClasses[className.toLowerCase()]?.name || className,
+    race,
+    gender,
     hp: derived.maxHp,
     maxHp: derived.maxHp,
     mp: derived.maxMp,
     maxMp: derived.maxMp,
-    stats: stats as unknown as Record<string, number>,
+    stats: modifiedStats as unknown as Record<string, number>,
     skills,
-    traits,
+    traits: [...traits, ...racialTraits, ...weaponRestrictionTraits], // Combine class, racial, and weapon restriction traits
     inventory,
     armorClass: derived.armorClass,
     level: 1,
     experience: 0,
     conditions: [],
     spells: [],
+    portraitUrl: getPortraitUrl(className as 'warrior' | 'mage' | 'rogue' | 'bard' | 'paladin' | 'ranger' | 'druid' | 'monk' | 'warlock', race, gender), // Set portrait based on selection
     portraitSeed: Math.floor(Math.random() * 1000000),
     skillPoints: 0,
     featPoints: 0,
@@ -655,7 +722,7 @@ export async function generateCharacter(
     ...physicalAttributes,
     creationChoices: {
       statMethod,
-      pointsSpent: statMethod === 'point_buy' ? calculatePointsSpent(stats) : 0
+      pointsSpent: statMethod === 'point_buy' ? calculatePointsSpent(modifiedStats) : 0
     },
     ...customOptions
   };
