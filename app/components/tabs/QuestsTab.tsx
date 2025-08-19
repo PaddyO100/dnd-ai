@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import { useGameStore } from '@/lib/state/gameStore';
 
 interface Quest {
   id: string;
@@ -21,70 +22,36 @@ interface Quest {
   note?: string;
 }
 
+type StoreQuest = {
+  title: string;
+  status: 'open' | 'in-progress' | 'completed' | 'failed';
+  note?: string;
+  category?: 'main' | 'side' | 'personal' | 'guild';
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
+  progress?: { current: number; total: number; description?: string };
+}
+
 interface QuestsTabProps {
-  quests?: { title: string; status: 'open' | 'done'; note?: string }[];
+  quests?: StoreQuest[];
 }
 
 export default function QuestsTab({ quests: gameQuests = [] }: QuestsTabProps) {
+  const { markQuestComplete } = useGameStore();
   const [selectedQuest, setSelectedQuest] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<'all' | 'main' | 'side' | 'personal' | 'guild'>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed'>('all');
 
-  // Enhanced quest data (this would come from a more comprehensive quest system)
-  const enhancedQuests: Quest[] = [
-    // Convert game quests to enhanced format
-    ...gameQuests.map((quest, index) => ({
-      id: `quest-${index}`,
-      title: quest.title,
-      description: quest.note || 'Eine wichtige Aufgabe wartet auf Erledigung.',
-      category: 'main' as const,
-      status: quest.status === 'done' ? 'completed' as const : 'in-progress' as const,
-      priority: 'medium' as const,
-      progress: {
-        current: quest.status === 'done' ? 1 : 0,
-        total: 1,
-        description: quest.status === 'done' ? 'Abgeschlossen' : 'In Bearbeitung'
-      },
-      note: quest.note
-    })),
-    
-    // Additional sample quests for demonstration
-    {
-      id: 'main-1',
-      title: 'Das verschollene Artefakt',
-      description: 'Findet das mächtige Kristall der Ewigkeit, das tief in den Ruinen von Aethermoor verborgen liegt.',
-      category: 'main',
-      status: 'in-progress',
-      priority: 'high',
-      progress: { current: 2, total: 4, description: 'Ruinen entdeckt, Schlüssel gefunden' },
-      rewards: ['5000 XP', 'Kristall der Ewigkeit', 'Goldener Ring'],
-      location: 'Ruinen von Aethermoor',
-      giver: 'Erzmagier Theron'
-    },
-    {
-      id: 'side-1',
-      title: 'Der verlorene Hund',
-      description: 'Helft der alten Dame beim Marktplatz, ihren entlaufenen Hund Bello zu finden.',
-      category: 'side',
-      status: 'open',
-      priority: 'low',
-      progress: { current: 0, total: 1, description: 'Noch nicht begonnen' },
-      rewards: ['50 Goldstücke', 'Hundeleckerli (5x)'],
-      location: 'Marktplatz',
-      giver: 'Alte Greta'
-    },
-    {
-      id: 'personal-1',
-      title: 'Familienehre wiederherstellen',
-      description: 'Entlarvt den wahren Verräter, der eure Familie in Ungnade fallen ließ.',
-      category: 'personal',
-      status: 'in-progress',
-      priority: 'high',
-      progress: { current: 1, total: 3, description: 'Erste Hinweise gesammelt' },
-      rewards: ['Familienwappen', 'Adelstitel', '2000 XP'],
-      giver: 'Persönliche Vendetta'
-    }
-  ];
+  // Light enrichment of store quests for display (no hardcoded demo entries)
+  const enhancedQuests: Quest[] = gameQuests.map((quest, index) => ({
+    id: `quest-${index}`,
+    title: quest.title,
+    description: quest.note || 'Eine wichtige Aufgabe wartet auf Erledigung.',
+    category: quest.category || 'main',
+    status: (quest.status as Quest['status'] ?? 'in-progress'),
+    priority: quest.priority || 'medium',
+    progress: quest.progress || { current: 0, total: 1, description: 'In Bearbeitung' },
+    note: quest.note
+  }));
 
   const getQuestsByFilter = () => {
     return enhancedQuests.filter(quest => {
@@ -253,6 +220,16 @@ export default function QuestsTab({ quests: gameQuests = [] }: QuestsTabProps) {
                 {/* Expanded Details */}
                 {selectedQuest === quest.id && (
                   <div className="border-t border-amber-200 pt-3 mt-3 space-y-2">
+                    <div className="flex gap-2">
+                      {quest.status !== 'completed' && (
+                        <button
+                          className="text-xs px-2 py-1 bg-green-100 text-green-700 hover:bg-green-200 rounded"
+                          onClick={(e) => { e.stopPropagation(); markQuestComplete(quest.title); }}
+                        >
+                          Als abgeschlossen markieren
+                        </button>
+                      )}
+                    </div>
                     {quest.location && (
                       <div className="flex items-center gap-2 text-xs">
                         <svg className="w-3 h-3 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

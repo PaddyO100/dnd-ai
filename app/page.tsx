@@ -1,5 +1,6 @@
 'use client';
 
+import MainMenu from '@/app/components/MainMenu';
 import OnboardingWizard from '@/app/components/OnboardingWizard';
 import GameView from '@/app/components/GameView';
 import CampaignSelection from '@/app/components/CampaignSelection';
@@ -9,6 +10,8 @@ export default function Page() {
   const step = useGameStore((s) => s.step);
   
   switch (step) {
+    case 'mainMenu':
+      return <MainMenu />;
     case 'onboarding':
       return <OnboardingWizard />;
     case 'campaignSelection':
@@ -16,6 +19,6 @@ export default function Page() {
     case 'inGame':
       return <GameView />;
     default:
-      return <OnboardingWizard />;
+      return <MainMenu />;
   }
 }

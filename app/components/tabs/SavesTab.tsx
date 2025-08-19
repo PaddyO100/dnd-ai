@@ -22,6 +22,7 @@ type SavesResponse = {
     isEmpty: boolean;
     metadata?: SaveMetadata;
   }>;
+  autoSave?: { timestamp: number; playTime: number; lastLocation: string } | null;
 };
 
 export default function SavesTab() {
@@ -47,6 +48,16 @@ export default function SavesTab() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  // Refresh when other tabs modify localStorage saves
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key && (e.key.includes('dnd-ai-save-slot_') || e.key === 'dnd-ai-save-autosave' || e.key === 'dnd-ai-save-metadata')) {
+        load();
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [load]);
 
   const handleLoad = async (slotId: number) => {
     try {
@@ -75,6 +86,20 @@ export default function SavesTab() {
       alert(e instanceof Error ? e.message : 'Failed to delete save');
     }
   };
+  
+  const handleLoadAutoSave = async () => {
+    try {
+      const res = await fetch('/api/saves/autosave');
+      if (!res.ok) throw new Error('Kein Auto-Save gefunden');
+      const json = await res.json();
+      if (json.success) {
+        importState(json.save.gameState);
+        router.push('/');
+      }
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Auto-Save konnte nicht geladen werden');
+    }
+  };
 
   if (loading) {
     return <div className="text-sm text-amber-700">Lade Spielstände…</div>;
@@ -93,6 +118,21 @@ export default function SavesTab() {
 
   return (
     <div className="space-y-3 max-h-96 overflow-y-auto pr-2 scroll-fantasy">
+      {/* Auto-save quick access */}
+      {data.autoSave && (
+        <div className="p-3 rounded-lg border bg-green-50 border-green-200 flex items-center justify-between">
+          <div className="text-sm text-green-800">
+            <div className="font-semibold">Auto-Save</div>
+            <div className="text-xs">
+              {new Date(data.autoSave.timestamp).toLocaleString()} · Ort: {data.autoSave.lastLocation}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={handleLoadAutoSave} className="btn">Laden</button>
+            <button onClick={load} className="btn-secondary">Aktualisieren</button>
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-1 gap-3">
         {data.slots.map((slot) => (
           <div key={slot.id} className="p-3 rounded-lg border bg-white/70 border-amber-200">

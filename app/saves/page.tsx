@@ -330,6 +330,12 @@ export default function SavesPage() {
   };
 
   const handleImportSave = async (importData: string, targetSlot: number) => {
+    // If target slot is not empty, confirm overwrite
+    const slot = saves?.slots.find(s => s.id === targetSlot);
+    if (slot && !slot.isEmpty) {
+      const ok = confirm(`Slot ${targetSlot} ist bereits belegt. Überschreiben?`);
+      if (!ok) return;
+    }
     const response = await fetch(`/api/saves/import`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -406,6 +412,34 @@ export default function SavesPage() {
             Import Save
           </button>
         </div>
+
+        {/* Auto-save quick access */}
+        {saves?.autoSave && (
+          <div className="bg-green-900/30 border border-green-700 rounded-lg p-4 mb-6 flex items-center justify-between">
+            <div className="text-green-200 text-sm">
+              <div className="font-semibold">Auto-Save verfügbar</div>
+              <div className="opacity-80">{new Date(saves.autoSave.timestamp).toLocaleString()} · Ort: {saves.autoSave.lastLocation}</div>
+            </div>
+            <button
+              onClick={async () => {
+                try {
+                  const res = await fetch('/api/saves/autosave');
+                  if (!res.ok) throw new Error('Kein Auto-Save gefunden');
+                  const json = await res.json();
+                  if (json.success) {
+                    importState(json.save.gameState);
+                    router.push('/');
+                  }
+                } catch (e) {
+                  alert(e instanceof Error ? e.message : 'Auto-Save konnte nicht geladen werden');
+                }
+              }}
+              className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg"
+            >
+              Auto-Save laden
+            </button>
+          </div>
+        )}
 
         {/* Statistics */}
         {saves?.statistics && (

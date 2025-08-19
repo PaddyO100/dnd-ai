@@ -128,7 +128,7 @@ export default function TutorialManager({ children }: TutorialManagerProps) {
 
   // Monitor quest completion
   useEffect(() => {
-    const completedQuests = gameState.quests.filter(q => q.status === 'done');
+    const completedQuests = gameState.quests.filter(q => q.status === 'completed');
     if (completedQuests.length > 0) {
       handleTrigger('first_quest_completion');
     }

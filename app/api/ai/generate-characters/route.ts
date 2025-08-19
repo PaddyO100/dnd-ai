@@ -1,23 +1,153 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { openrouter, OPENROUTER_MODEL } from '@/lib/ai/openrouter'
+import { getPortraitUrl } from '@/lib/character/portraitSystem'
+import type { Race, Gender, CharacterClass, InventoryItem } from '@/schemas/character'
+import { itemTemplates } from '@/lib/character/characterGenerator'
 
 const Input = z.object({
   players: z.number().min(1).max(6),
-  classes: z.array(z.string()).min(1)
+  // Allow empty classes; we can infer from playerSelections or fill defaults
+  classes: z.array(z.string()).default([]),
+  // New: full multi-player selections
+  playerSelections: z.array(z.object({
+    class: z.string(),
+    race: z.string(),
+    gender: z.string()
+  })).optional(),
+  scenario: z.object({ id: z.string().optional(), title: z.string().optional() }).optional()
 })
 
+
+function pick<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)] }
+
+function generateFantasyName(race?: Race, gender?: Gender, scenarioTitle?: string): string {
+  const humanMale = ['Alaric','Benedikt','Cedric','Dietmar','Eldric','Falko','Geralt','Hagen','Isen','Jorund','Konrad','Leofric','Marek','Nestor','Ortwin','Ragvald','Serik','Tristan','Ulric','Valten']
+  const humanFemale = ['Adelheid','Brigida','Celia','Daria','Elara','Frida','Greta','Helena','Isolde','Jasmin','Klara','Livia','Mara','Neria','Odile','Runa','Serena','Thyra','Ulma','Vera']
+  const elfMale = ['Aelar','Beluar','Caelion','Daerion','Elrohir','Faelar','Gaelin','Hadriel','Ithron','Kaelith']
+  const elfFemale = ['Aelene','Belira','Caelya','Daenara','Elowen','Faelith','Gaelira','Hathiel','Ilyana','Kaelira']
+  const dwarfMale = ['Balrik','Dorim','Edrun','Falkrim','Gorim','Hadrin','Kazmuk','Norrin','Orsik','Thorin']
+  const dwarfFemale = ['Bera','Dagna','Edrika','Frida','Gerta','Helga','Ingra','Katla','Ragna','Thyra']
+  const orcMale = ['Brakk','Darg','Gor','Hark','Karg','Morg','Ruk','Thrag','Urzog','Zug']
+  const orcFemale = ['Brakka','Darga','Gora','Harka','Karga','Morga','Ruka','Thraga','Urza','Zuga']
+
+  let pool: string[] = humanMale
+  if (race === 'high_elf' || race === 'wood_elf' || race === 'dark_elf') pool = gender === 'female' ? elfFemale : elfMale
+  else if (race === 'dwarf') pool = gender === 'female' ? dwarfFemale : dwarfMale
+  else if (race === 'orc') pool = gender === 'female' ? orcFemale : orcMale
+  else pool = gender === 'female' ? humanFemale : humanMale
+
+  // optional epithet from scenario (e.g., "von Aethermoor")
+  const place = (scenarioTitle || '').split(/[\s,:\-]+/).filter(Boolean)[0]
+  const surname = place ? (Math.random() < 0.6 ? ` von ${place}` : '') : ''
+  return `${pick(pool)}${surname}`
+}
 
 export async function POST(req: Request) {
   const data = Input.parse(await req.json())
 
+  // Map localized class display names to internal slugs
+  const classNameToSlug = (cls?: string): CharacterClass | undefined => {
+    if (!cls) return undefined as unknown as CharacterClass
+    const c = cls.toLowerCase()
+    const map: Record<string, CharacterClass> = {
+      // German → slug
+      'krieger': 'warrior',
+      'magier': 'mage',
+      'schurke': 'rogue',
+      'barde': 'bard',
+      'paladin': 'paladin',
+      'waldläufer': 'ranger',
+      'waldlaeufer': 'ranger',
+      // common encoding fallbacks
+      'druide': 'druid',
+      'mönch': 'monk',
+      'monch': 'monk',
+      'hexenmeister': 'warlock',
+      // English passthrough
+      'warrior': 'warrior',
+      'mage': 'mage',
+      'rogue': 'rogue',
+      'bard': 'bard',
+      'ranger': 'ranger',
+      'druid': 'druid',
+      'monk': 'monk',
+      'warlock': 'warlock',
+    }
+    return map[c]
+  }
+
+  type RawEffect = { type?: string; value?: number | string; description?: string }
+  const normalizeInventory = (inv: unknown, cls: CharacterClass): InventoryItem[] => {
+    const items: InventoryItem[] = Array.isArray(inv) ? inv.map((raw) => {
+      const r = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>
+      const typeStr = String(r.type || 'misc')
+      const allowed = ['weapon','armor','consumable','tool','misc','quest','valuable','clothing']
+      const type = (allowed.includes(typeStr) ? typeStr : 'misc') as InventoryItem['type']
+      return {
+        name: String(r.name || 'Gegenstand'),
+        type,
+        subtype: (String(r.subtype || 'none') as InventoryItem['subtype']) ?? 'none',
+        rarity: (String(r.rarity || 'common') as InventoryItem['rarity']) ?? 'common',
+        quantity: Number(r.quantity ?? 1),
+        description: (r.description ? String(r.description) : undefined),
+        equipped: Boolean(r.equipped ?? false),
+        location: (String(r.location || (r.equipped ? 'equipped' : 'inventory')) as InventoryItem['location']),
+        effects: Array.isArray(r.effects) ? (r.effects as RawEffect[]).map((e: RawEffect) => ({
+          type: ((): InventoryItem['effects'][number]['type'] => {
+            const t = String(e?.type || 'passive') as InventoryItem['effects'][number]['type'] | string
+            const allowed: ReadonlyArray<InventoryItem['effects'][number]['type']> = ['stat_bonus','damage_bonus','resistance','immunity','spell','passive'] as const
+            return (allowed as readonly string[]).includes(t) ? (t as InventoryItem['effects'][number]['type']) : 'passive'
+          })(),
+          value: (typeof e?.value === 'number' || typeof e?.value === 'string') ? e.value : 0,
+          description: String(e?.description || 'Effekt')
+        })) : [],
+        value: Number(r.value ?? 0),
+        weight: Number(r.weight ?? 0),
+      }
+    }) : []
+
+    if (items.length > 0) return items
+
+    // Provide a minimal class-based starting kit using itemTemplates
+    const add = (key: keyof typeof itemTemplates) => {
+      const t = itemTemplates[key]
+      return { ...t, quantity: 1 } as InventoryItem
+    }
+    switch (cls) {
+      case 'warrior':
+        return [add('langschwert'), add('lederschiene'), add('heiltrank')]
+      case 'mage':
+        return [add('zauberstab'), add('zauberkomponenten'), add('manatrank')]
+      case 'rogue':
+        return [add('dolch'), add('dietriche'), add('seil')]
+      case 'ranger':
+        return [add('bogen'), add('pfeile'), add('rations')]
+      case 'paladin':
+        return [add('langschwert'), add('heiltrank')]
+      case 'druid':
+        return [add('zauberkomponenten'), add('rations')]
+      case 'monk':
+        return [add('heiltrank')]
+      case 'warlock':
+        return [add('zauberstab'), add('zauberkomponenten')]
+      case 'bard':
+        return [add('dolch'), add('heiltrank')]
+      default:
+        return [add('heiltrank')]
+    }
+  }
+
   // Helper: mock party when credits are unavailable
   const mockParty = () => {
-    const names = ["Arin", "Bela", "Corin", "Dara", "Eryn", "Falk"]
     const base = (i: number) => ({
       id: `char_${Date.now()}_${i}`,
-      name: names[i % names.length],
-      cls: data.classes[i % data.classes.length],
+      name: generateFantasyName(
+        (data.playerSelections?.[i]?.race as Race) || 'human',
+        (data.playerSelections?.[i]?.gender as Gender) || (i % 2 === 0 ? 'male' as Gender : 'female' as Gender),
+        data.scenario?.title
+      ),
+      cls: (data.playerSelections?.[i]?.class || data.classes?.[i] || 'warrior') as CharacterClass,
       hp: 10 + (i % 3),
       maxHp: 10 + (i % 3),
       mp: 7 + (i % 3),
@@ -34,7 +164,12 @@ export async function POST(req: Request) {
       inventory: [ { name: "Heiltrank", type: "misc", quantity: 1, description: "Stellt 5 HP her", equipped: false } ],
       conditions: [],
       backstory: { origin: "Dorf", personality: "Loyal", motivation: "Ehre", flaw: "Übereilt", background: "Ein junger Abenteurer." },
-  portraitSeed: Math.floor(Math.random() * 1_000_000) // kept for deterministic portraits in future
+      portraitSeed: Math.floor(Math.random() * 1_000_000), // kept for deterministic portraits in future
+      portraitUrl: getPortraitUrl(
+        ((data.playerSelections?.[i]?.class || data.classes?.[i] || 'warrior') as string).toLowerCase() as CharacterClass,
+        ((data.playerSelections?.[i]?.race) as Race) || ('human' as Race),
+        ((data.playerSelections?.[i]?.gender) as Gender) || ((i % 2 === 0 ? 'male' : 'female') as Gender)
+      )
     })
     return { party: Array.from({ length: data.players }).map((_, i) => base(i)) }
   }
@@ -47,7 +182,7 @@ Erweiterte Charakterstruktur:
 {
   "id": "unique_string",
   "name": "deutscher Name",
-  "cls": "Klasse aus ${data.classes.join(', ')}",
+  "cls": "Klasse aus ${ (data.playerSelections?.map(x => x.class) || data.classes || ['warrior','mage','rogue']).join(', ') }",
   "hp": number (8-15),
   "maxHp": number (gleich hp),
   "mp": number (5-12),
@@ -163,17 +298,31 @@ Gib NUR gültiges JSON zurück, ohne weiteren Text.
       cleanedJson = cleanedJson.substring(jsonStart, jsonEnd + 1)
     }
     
-    const parsed = JSON.parse(cleanedJson)
+  const parsed = JSON.parse(cleanedJson)
     
     // Post-process to ensure balance and add missing fields
     if (parsed.party && Array.isArray(parsed.party)) {
       parsed.party = parsed.party.map((char: unknown, index: number) => {
-  const c = char as Record<string, unknown>;
+        const c = (typeof char === 'object' && char !== null ? char : {}) as Record<string, unknown>;
+  const selection = data.playerSelections?.[index]
+  const clsSlug = (classNameToSlug(String(selection?.class || c.cls)) || 'warrior') as CharacterClass
+        const race: Race = (selection?.race as Race) || (c.race as Race) || ('human' as Race)
+        const gender: Gender = (selection?.gender as Gender) || (c.gender as Gender) || ((index % 2 === 0 ? 'male' : 'female') as Gender)
         // Ensure all required fields exist with defaults
         const processedChar = {
           id: c.id || `char_${Date.now()}_${index}`,
-          name: c.name || `Charakter ${index + 1}`,
-          cls: c.cls || data.classes[index % data.classes.length],
+          name: (() => {
+            const provided = String(c.name || '').trim()
+            const lower = provided.toLowerCase()
+            const bad = !provided || /^charakter\s*\d+$/i.test(provided) ||
+              ['krieger','magier','schurke','barde','paladin','waldläufer','waldlaeufer','druide','mönch','monch','hexenmeister','warrior','mage','rogue','bard','ranger','druid','monk','warlock'].includes(lower)
+            if (!bad) return provided
+            return generateFantasyName(race, gender, data.scenario?.title)
+          })(),
+          // Keep display class if provided; otherwise use slug
+          cls: (typeof c.cls === 'string' && c.cls.trim().length > 0) ? c.cls : clsSlug,
+          race,
+          gender,
           hp: Math.min(15, Math.max(8, Number(c.hp) || 10)),
           maxHp: Number(c.maxHp) || Number(c.hp) || 10,
           mp: Math.min(12, Math.max(5, Number(c.mp) || 8)),
@@ -189,10 +338,10 @@ Gib NUR gültiges JSON zurück, ohne weiteren Text.
             CHA: Math.min(16, Math.max(8, Number((c.stats && (c.stats as Record<string, number>).CHA) || 10))),
           },
           armorClass: c.armorClass || 10,
-          skills: c.skills || [],
-          spells: c.spells || [],
-          traits: c.traits || [],
-          inventory: c.inventory || [],
+          skills: Array.isArray(c.skills) ? c.skills : [],
+          spells: Array.isArray(c.spells) ? c.spells : [],
+          traits: Array.isArray(c.traits) ? c.traits : [],
+          inventory: normalizeInventory(c.inventory, clsSlug),
           conditions: [],
           backstory: c.backstory || {
             origin: 'Unbekannte Herkunft',
@@ -201,12 +350,17 @@ Gib NUR gültiges JSON zurück, ohne weiteren Text.
             flaw: 'Noch unentdeckt',
             background: 'Ein geheimnisvoller Abenteurer.'
           },
-          portraitSeed: c.portraitSeed || Math.floor(Math.random() * 1000000)
+          portraitSeed: c.portraitSeed || Math.floor(Math.random() * 1000000),
+          portraitUrl: getPortraitUrl(
+            clsSlug,
+            race,
+            gender
+          )
         }
 
         // Ensure maxHp and maxMp are set
-        processedChar.maxHp = processedChar.hp
-        processedChar.maxMp = processedChar.mp
+  processedChar.maxHp = processedChar.hp
+  processedChar.maxMp = processedChar.mp
 
         return processedChar
       })

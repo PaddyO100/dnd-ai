@@ -11,17 +11,6 @@
 				"$tsc"
 			],
 			"group": "build"
-		},
-		{
-			"label": "run-vitest",
-			"type": "shell",
-			"command": "npm run test",
-			"args": [],
-			"isBackground": false,
-			"problemMatcher": [
-				"$tsc"
-			],
-			"group": "test"
 		}
 	]
 }

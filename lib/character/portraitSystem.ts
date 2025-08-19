@@ -20,8 +20,7 @@ export function getPortraitUrl(characterClass: CharacterClass, race: Race, gende
 
 // Check if portrait exists (based on your current folder structure)
 export function isPortraitAvailable(characterClass: CharacterClass, race: Race, gender: Gender): boolean {
-  // For now, we assume all portraits exist since you're creating them
-  // Later this could check actual file existence
+  // All 108 portraits are now available as PNG files
   const availableClasses: CharacterClass[] = ['warrior', 'mage', 'rogue', 'bard', 'paladin', 'ranger', 'druid', 'monk', 'warlock']
   const availableRaces: Race[] = ['human', 'orc', 'dark_elf', 'high_elf', 'wood_elf', 'dwarf']
   const availableGenders: Gender[] = ['male', 'female']
@@ -93,7 +92,7 @@ export function getPortraitInfo(characterClass: CharacterClass, race: Race, gend
   }
 }
 
-// Fallback portrait if specific one doesn't exist
+// Fallback portrait if specific one doesn't exist (should not happen now)
 export function getFallbackPortraitUrl(): string {
   return '/portraits/warrior/warrior_human_male.png'
 }

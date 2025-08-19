@@ -5,6 +5,7 @@ import type { Metadata } from 'next'
 import ThemeProvider from '@/components/ThemeProvider'
 import ThemeToggle from '@/components/ThemeToggle'
 import AutoSaveProvider from '@/components/AutoSaveProvider'
+import { audioManager } from '@/lib/audio/audioManager'
 
 export const metadata: Metadata = {
   title: 'D&D KI – Starter',
@@ -12,6 +13,11 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // Start main menu music as soon as the app mounts (client only)
+  if (typeof window !== 'undefined') {
+    // fire-and-forget, guarded by audioManager serialization/debounce
+    void audioManager.changeScene('main_menu');
+  }
   return (
     <html lang="de">
       <head>

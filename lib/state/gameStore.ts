@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Character, Skill, Spell, InventoryItem, Condition } from '../../schemas/character';
+import { generateInitialQuests } from '@/lib/engine/questGenerator';
 
 // Extend Character type for game usage
 export type Player = Character & {
@@ -27,7 +28,15 @@ export type Effects = {
     skillBonus?: { skill: string; bonus: number };
   }>;
   inventory?: Array<{ op: 'add' | 'remove'; item: string | InventoryItem }>;
-  quests?: Array<{ op: 'add' | 'update' | 'complete'; title: string; note?: string }>;
+  quests?: Array<{
+    op: 'add' | 'update' | 'complete';
+    title: string;
+    note?: string;
+    category?: QuestCategory;
+    priority?: QuestPriority;
+    status?: QuestStatus;
+    progress?: { current?: number; total?: number; description?: string };
+  }>;
   experience?: Array<{ name: string; xpGain: number }>;
 };
 
@@ -63,8 +72,20 @@ export type PredefinedCampaign = {
   };
 };
 
+export type QuestCategory = 'main' | 'side' | 'personal' | 'guild'
+export type QuestPriority = 'low' | 'medium' | 'high' | 'urgent'
+export type QuestStatus = 'open' | 'in-progress' | 'completed' | 'failed'
+export type Quest = {
+  title: string
+  status: QuestStatus
+  note?: string
+  category?: QuestCategory
+  priority?: QuestPriority
+  progress?: { current: number; total: number; description?: string }
+}
+
 export type GameState = {
-  step: 'onboarding' | 'campaignSelection' | 'inGame';
+  step: 'mainMenu' | 'onboarding' | 'campaignSelection' | 'inGame';
   selections: {
     genre?: string;
     frame?: string;
@@ -79,7 +100,7 @@ export type GameState = {
   party: Player[];
   history: HistoryEntry[];
   inventory: string[];
-  quests: { title: string; status: 'open' | 'done'; note?: string }[];
+  quests: Quest[];
   rngSeed?: number;
   map?: { seed?: number; imageUrl?: string };
   selectedPlayerId?: string;
@@ -111,8 +132,12 @@ export type GameState = {
   setPlayerPortrait: (id: string, url: string) => void;
   setSelectedPlayer: (id: string) => void;
   setCampaignSelectionStep: () => void;
+  setMainMenuStep: () => void;
   triggerAutoSave: () => void;
   updateAutoSaveSettings: (enabled: boolean, interval: number) => void;
+  // Quest reducers
+  markQuestComplete: (title: string) => void;
+  updateQuestProgress: (title: string, progress: Partial<NonNullable<Quest['progress']>>) => void;
 };
 
 const defaultSettings: AppSettings = {
@@ -133,7 +158,7 @@ const defaultSettings: AppSettings = {
 export const useGameStore = create<GameState>()(
   persist(
     (set, get) => ({
-      step: 'onboarding',
+      step: 'mainMenu',
       selections: { classes: [], startingWeapons: [] },
       party: [],
       history: [],
@@ -150,6 +175,40 @@ export const useGameStore = create<GameState>()(
           const seededParty = party.map((p) => ({
             ...p,
             portraitSeed: p.portraitSeed ?? Math.floor(Math.random() * 1e9),
+            // Ensure any missing inventory arrays are present
+            inventory: Array.isArray(p.inventory) ? p.inventory : []
+          })).map((p) => {
+            // Auto-equip starter items more comprehensively
+            const inv = [...(p.inventory || [])];
+            const hasEquipped = inv.some(i => i.equipped || i.location === 'equipped');
+            if (!hasEquipped && inv.length > 0) {
+              // Try to equip multiple starter items
+              inv.forEach((item, idx) => {
+                if (item.type === 'weapon' || (item.type === 'armor' && item.subtype === 'chest')) {
+                  inv[idx] = { ...inv[idx], equipped: true, location: 'equipped' } as InventoryItem;
+                } else if (!item.location || item.location === 'inventory') {
+                  // Ensure other items are properly categorized
+                  inv[idx] = { ...inv[idx], location: 'inventory' } as InventoryItem;
+                }
+              });
+            } else {
+              // Ensure all items have proper locations
+              inv.forEach((item, idx) => {
+                if (!item.location) {
+                  inv[idx] = { ...inv[idx], location: item.equipped ? 'equipped' : 'inventory' } as InventoryItem;
+                }
+              });
+            }
+            return { ...p, inventory: inv };
+          });
+          // Generate a small quest set based on scenario and party
+          const initialQuests = generateInitialQuests(scenario, seededParty.map(sp => ({ id: sp.id, name: sp.name, cls: sp.cls }))).map(q => ({
+            title: q.title,
+            status: q.status,
+            note: q.note,
+            category: q.category,
+            priority: q.priority,
+            progress: q.progress
           }));
           return {
             step: 'inGame',
@@ -157,7 +216,7 @@ export const useGameStore = create<GameState>()(
             party: seededParty,
             history: [],
             inventory: [],
-            quests: [],
+            quests: initialQuests,
             rngSeed: Math.floor(Math.random() * 1e9),
             map: { seed: Math.floor(Math.random() * 1e9) },
             selectedPlayerId: seededParty[0]?.id,
@@ -236,14 +295,41 @@ export const useGameStore = create<GameState>()(
         // Quests
         const quests = [...s.quests];
         for (const q of effects?.quests || []) {
-          if (q.op === 'add') quests.push({ title: q.title, status: 'open', note: q.note });
+          if (q.op === 'add') {
+            const newQuest: Quest = {
+              title: q.title,
+              status: q.status ?? 'open',
+              note: q.note,
+              category: q.category ?? undefined,
+              priority: q.priority ?? undefined,
+              progress: q.progress ? {
+                current: q.progress.current ?? 0,
+                total: q.progress.total ?? 1,
+                description: q.progress.description
+              } : undefined,
+            }
+            quests.push(newQuest)
+          }
           if (q.op === 'update') {
             const idx = quests.findIndex((x) => x.title === q.title);
-            if (idx >= 0) quests[idx] = { ...quests[idx], note: q.note ?? quests[idx].note };
+            if (idx >= 0) {
+              quests[idx] = {
+                ...quests[idx],
+                note: q.note ?? quests[idx].note,
+                category: q.category ?? quests[idx].category,
+                priority: q.priority ?? quests[idx].priority,
+                status: q.status ?? quests[idx].status,
+                progress: q.progress ? {
+                  current: q.progress.current ?? quests[idx].progress?.current ?? 0,
+                  total: q.progress.total ?? quests[idx].progress?.total ?? 1,
+                  description: q.progress.description ?? quests[idx].progress?.description,
+                } : quests[idx].progress,
+              };
+            }
           }
           if (q.op === 'complete') {
             const idx = quests.findIndex((x) => x.title === q.title);
-            if (idx >= 0) quests[idx] = { ...quests[idx], status: 'done' };
+            if (idx >= 0) quests[idx] = { ...quests[idx], status: 'completed' };
           }
         }
 
@@ -345,7 +431,7 @@ export const useGameStore = create<GameState>()(
 
       reset: () =>
         set({
-          step: 'onboarding',
+          step: 'mainMenu',
           selections: { classes: [], startingWeapons: [] },
           party: [],
           history: [],
@@ -360,12 +446,15 @@ export const useGameStore = create<GameState>()(
           localStorage.removeItem('dnd-ai-save');
           // Also clear any individual save slots
           for (let i = 1; i <= 6; i++) {
-            localStorage.removeItem(`dnd-ai-save-slot-${i}`);
+            localStorage.removeItem(`dnd-ai-save-slot_${i}`);
           }
+          // Remove quicksave and autosave keys if present
+          localStorage.removeItem('dnd-ai-save-slot_999');
+          localStorage.removeItem('dnd-ai-save-autosave');
           localStorage.removeItem('dnd-ai-save-metadata');
         }
         set({
-          step: 'onboarding',
+          step: 'mainMenu',
           selections: { classes: [], startingWeapons: [] },
           party: [],
           history: [],
@@ -376,6 +465,7 @@ export const useGameStore = create<GameState>()(
       },
 
       setCampaignSelectionStep: () => set({ step: 'campaignSelection' }),
+      setMainMenuStep: () => set({ step: 'mainMenu' }),
 
   importState: (data) => {
         // Defensive merge; ensure arrays are present
@@ -406,6 +496,20 @@ export const useGameStore = create<GameState>()(
           party: s.party.map((p) => (p.id === id ? { ...p, portraitUrl: url } : p)),
         })),
       setSelectedPlayer: (id) => set(() => ({ selectedPlayerId: id })),
+
+      // Quest reducers
+      markQuestComplete: (title) => {
+        const { applyEffects } = get();
+        applyEffects({ quests: [{ op: 'complete', title }] });
+      },
+      updateQuestProgress: (title, progress) =>
+        set((s) => ({
+          quests: s.quests.map((q) =>
+            q.title === title
+              ? { ...q, progress: { current: q.progress?.current ?? 0, total: q.progress?.total ?? 1, ...progress } }
+              : q
+          ),
+        })),
 
 
       triggerAutoSave: () => {
@@ -448,6 +552,25 @@ export const useGameStore = create<GameState>()(
         }));
       },
     }),
-    { name: 'dnd-ai-save' }
+    {
+      name: 'dnd-ai-save',
+      version: 2,
+      migrate: (persistedState: unknown) => {
+        const s: Partial<GameState> = (persistedState as Partial<GameState>) || {};
+        // If app was left in onboarding or step is missing, start at main menu on next boot
+        if (!s.step || s.step === 'onboarding') {
+          s.step = 'mainMenu';
+        }
+        // Ensure arrays are initialized
+        if (!s.selections) s.selections = { classes: [], startingWeapons: [] } as GameState['selections'];
+        if (!Array.isArray(s.selections.classes)) s.selections.classes = [];
+        if (!Array.isArray(s.selections.startingWeapons)) s.selections.startingWeapons = [];
+        s.party = Array.isArray(s.party) ? s.party : [];
+        s.history = Array.isArray(s.history) ? s.history : [];
+        s.inventory = Array.isArray(s.inventory) ? s.inventory : [];
+        s.quests = Array.isArray(s.quests) ? s.quests : [];
+        return s as GameState;
+      },
+    }
   )
 );

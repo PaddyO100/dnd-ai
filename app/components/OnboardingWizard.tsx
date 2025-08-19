@@ -1,11 +1,14 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import Image from "next/image";
-import { useGameStore, type Scenario, type Player } from "@/lib/state/gameStore";
+import { useGameStore, type Scenario, type Player, type Effects, type QuestCategory, type QuestPriority, type QuestStatus } from "@/lib/state/gameStore";
 import { getAllRaces, getAllGenders, getRaceDisplayName, getGenderDisplayName, getPortraitUrl, getAllCharacterClasses, getClassDisplayName } from "@/lib/character/portraitSystem";
 import { getRaceInfo, getRacialTraits } from "@/lib/character/raceSystem";
+import { audioManager } from "@/lib/audio/audioManager";
 import type { Race, Gender, CharacterClass } from "@/schemas/character";
+import ClassInfoModal from "./modals/ClassInfoModal";
+import RaceInfoModal from "./modals/RaceInfoModal";
 
 type WorldPrefs = { magic: string; tech: string; climate: string };
 
@@ -13,20 +16,20 @@ const genres = ["Fantasy", "Sci-Fi", "Steampunk", "Cyberpunk", "Mystic"];
 const frames = ["Heroisch", "Grimdark", "Entdeckung", "Intrige", "Überleben"];
 const magicLevels = ["Niedrig", "Mittel", "Hoch", "Wild"];
 const climates = ["Gemäßigt", "Kalt", "Heiß", "Tropisch", "Wüste", "Nebelhaft"];
-const classOptions = [
-	"Krieger",
-	"Magier",
-	"Schurke",
-	"Barde",
-	"Paladin",
-	"Waldläufer",
-	"Druide",
-	"Mönch",
-	"Hexenmeister",
-];
+// Removed classOptions - classes are now selected per character in Step 6
+
+type NewQuestLike = {
+	title: string;
+	note?: string;
+	description?: string;
+	category?: QuestCategory;
+	priority?: QuestPriority;
+	status?: QuestStatus;
+	progress?: { current?: number; total?: number; description?: string };
+}
 
 export default function OnboardingWizard() {
-		const { selections, setSelections, startGame, pushHistory, setCampaignSelectionStep } = useGameStore();
+	const { selections, setSelections, startGame, pushHistory, setCampaignSelectionStep, setMainMenuStep, applyEffects } = useGameStore();
 
 	const [step, setStep] = useState<number>(1);
 	const [localGenre, setLocalGenre] = useState<string>(selections.genre || genres[0]);
@@ -45,41 +48,64 @@ export default function OnboardingWizard() {
 	});
 	const [conflict, setConflict] = useState<string>(selections.conflict || "");
 	const [players, setPlayers] = useState<number>(selections.players || 3);
-	const [classes, setClasses] = useState<string[]>(selections.classes?.length ? selections.classes : [classOptions[0], classOptions[1]]);
+	// Removed: const [classes, setClasses] - no longer needed, classes are selected individually per character
 
 	// Character Creation State
 	const [selectedRace, setSelectedRace] = useState<Race | null>(null);
 	const [selectedGender, setSelectedGender] = useState<Gender | null>(null);
 	const [selectedClass, setSelectedClass] = useState<CharacterClass | null>(null);
+		// Multi-character selection state
+		const [currentPlayerIndex, setCurrentPlayerIndex] = useState<number>(0);
+		const [playerChoices, setPlayerChoices] = useState<Array<{class: CharacterClass; race: Race; gender: Gender}>>([]);
+
+	// Modal State
+	const [showClassModal, setShowClassModal] = useState<boolean>(false);
+	const [modalClass, setModalClass] = useState<CharacterClass | null>(null);
+	const [showRaceModal, setShowRaceModal] = useState<boolean>(false);
+	const [modalRace, setModalRace] = useState<Race | null>(null);
 
 	const [scenarios, setScenarios] = useState<Scenario[] | null>(null);
 	const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(selections.scenario || null);
 	const [loading, setLoading] = useState<boolean>(false);
 	const [charLoading, setCharLoading] = useState<boolean>(false);
 	const [progress, setProgress] = useState<number>(0);
+
+		// Initialize character creation music and restore on unmount if needed
+		useEffect(() => {
+			const initCharacterCreationAudio = async () => {
+				await audioManager.changeScene('character_creation');
+			};
+			initCharacterCreationAudio();
+			return () => {
+				const step = useGameStore.getState().step;
+				if (step === 'mainMenu') {
+					audioManager.changeScene('main_menu');
+				}
+			};
+		}, []);
 	const [error, setError] = useState<string | null>(null);
 
 	const canContinue = useMemo(() => {
 		if (step === 1) return Boolean(localGenre && localFrame);
 		if (step === 2) return Boolean(world.magic && world.climate);
 		if (step === 3) return conflict.trim().length > 5; // etwas sinnvolles
-		if (step === 4) return players >= 1 && classes.length >= 1;
+		if (step === 4) return players >= 1; // Only player count validation
 		if (step === 5) return Boolean(selectedScenario);
 		if (step === 6) return Boolean(selectedClass);
 		if (step === 7) return Boolean(selectedRace);
 		if (step === 8) return Boolean(selectedGender);
 		return true;
-	}, [step, localGenre, localFrame, world, conflict, players, classes, selectedScenario, selectedClass, selectedRace, selectedGender]);
+	}, [step, localGenre, localFrame, world, conflict, players, selectedScenario, selectedClass, selectedRace, selectedGender]);
 
 	const advance = () => {
 		if (!canContinue) return;
+		audioManager.playUISound('button');
 		setError(null);
 		setStep((s) => Math.min(8, s + 1));
 	};
-	const back = () => setStep((s) => Math.max(1, s - 1));
-
-	const handleToggleClass = (c: string) => {
-		setClasses((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
+	const back = () => {
+		audioManager.playUISound('button');
+		setStep((s) => Math.max(1, s - 1));
 	};
 
 	const saveSelections = () => {
@@ -89,7 +115,7 @@ export default function OnboardingWizard() {
 			world,
 			conflict,
 			players,
-			classes,
+			classes: [], // Empty array since classes are now selected per character
 		});
 	};
 
@@ -109,7 +135,7 @@ export default function OnboardingWizard() {
 					world,
 					conflict,
 					players,
-					classes,
+					classes: [], // Empty since classes are per-character now
 				}),
 			});
 			setProgress(55);
@@ -142,17 +168,14 @@ export default function OnboardingWizard() {
 			setError(null);
 			saveSelections();
 
-			const res = await fetch("/api/ai/generate-characters", {
+		const res = await fetch("/api/ai/generate-characters", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ 
-					players, 
-					classes,
-					playerCharacter: selectedClass && selectedRace && selectedGender ? {
-						class: selectedClass,
-						race: selectedRace,
-						gender: selectedGender
-					} : null
+		    players, 
+		    classes: playerChoices.length ? playerChoices.map(c => c.class) : [],
+		playerSelections: playerChoices,
+		scenario: { id: selectedScenario.id, title: selectedScenario.title }
 				}),
 			});
 			setProgress(65);
@@ -164,7 +187,43 @@ export default function OnboardingWizard() {
 			const party: Player[] = Array.isArray(data.party) ? data.party : [];
 			if (!party.length) throw new Error("Keine Charaktere erhalten.");
 
-			startGame(selectedScenario, party);
+			// Generate AI quests (with fallback server-side) and apply to store via Effects
+			try {
+				const qRes = await fetch('/api/ai/generate-quests', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						scenario: { id: selectedScenario.id, title: selectedScenario.title, summary: selectedScenario.summary },
+						selections: { genre: localGenre, frame: localFrame, world, conflict },
+						party: party.map(p => ({ id: p.id, name: p.name, cls: p.cls, race: p.race, gender: p.gender }))
+					})
+				})
+				const qJson = await qRes.json()
+				const quests: NewQuestLike[] = Array.isArray(qJson.quests) ? qJson.quests : []
+
+				// start the game first so store is ready, then add quests via Effects (deterministic)
+				startGame(selectedScenario, party)
+				if (quests.length) {
+					const effects: Effects = {
+						quests: quests.map((q: NewQuestLike) => ({
+							op: 'add',
+							title: String(q.title),
+							note: q.note || q.description,
+							category: q.category,
+							priority: q.priority,
+							status: q.status,
+							progress: q.progress
+						}))
+					}
+					// Apply after a microtask to ensure state is initialized
+					setTimeout(() => pushHistory({ role: 'dm', content: `Quests vorbereitet: ${quests.length}` }), 0)
+					setTimeout(() => applyEffects(effects), 0)
+				}
+			} catch {
+				// Fallback: start game without AI quests; startGame seeds local quests
+				startGame(selectedScenario, party)
+			}
+
 			pushHistory({ role: "dm", content: `Willkommen zum Abenteuer: ${selectedScenario.title}. ${selectedScenario.summary}` });
 			} catch (e: unknown) {
 				const msg = e instanceof Error ? e.message : "Unbekannter Fehler bei der Charakter-Erzeugung";
@@ -185,17 +244,32 @@ export default function OnboardingWizard() {
 	);
 
 	return (
-		<div className="max-w-5xl mx-auto p-6 md:p-10">
+		<div className="mx-auto p-6 md:p-10 w-full max-w-[min(96vw,1400px)]">
 			{progress > 0 ? ProgressBar : null}
 
 			<header className="flex items-center justify-between mb-6">
-			<h1 className="text-2xl md:text-3xl font-bold tracking-tight">Aethel&apos;s Forge – Abenteuer-Assistent</h1>
-				<button
-					className="text-sm px-3 py-1 rounded-md border border-transparent hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30"
-					onClick={() => setCampaignSelectionStep()}
-				>
-					Kampagnen ansehen
-				</button>
+				<h1 className="text-2xl md:text-3xl font-bold tracking-tight">Aethel&apos;s Forge – Abenteuer-Assistent</h1>
+				<div className="flex items-center gap-2">
+					<button
+						className="text-sm px-3 py-1 rounded-md border border-transparent hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 flex items-center gap-2"
+						onClick={() => {
+							audioManager.playUISound('button');
+							setMainMenuStep();
+						}}
+						title="Startseite"
+					>
+						<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m0 0V11a1 1 0 011-1h2a1 1 0 011 1v10m0 0h3a1 1 0 001-1V10M9 21h6" />
+						</svg>
+						Home
+					</button>
+					<button
+						className="text-sm px-3 py-1 rounded-md border border-transparent hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30"
+						onClick={() => setCampaignSelectionStep()}
+					>
+						Kampagnen ansehen
+					</button>
+				</div>
 			</header>
 
 			<div className="rounded-2xl border border-black/10 dark:border-white/10 bg-white/70 dark:bg-black/30 backdrop-blur shadow-xl p-6 md:p-8">
@@ -271,10 +345,10 @@ export default function OnboardingWizard() {
 
 				{step === 4 && (
 					<section className="space-y-4">
-						<h2 className="text-xl font-semibold">Spieler & Klassen</h2>
-						<div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+						<h2 className="text-xl font-semibold">Spieleranzahl</h2>
+						<div className="max-w-md">
 							<div>
-								<label className="block text-sm mb-2">Spieleranzahl</label>
+								<label className="block text-sm mb-2 font-medium">Wie viele Charaktere möchtest du spielen?</label>
 								<input
 									type="number"
 									min={1}
@@ -283,27 +357,7 @@ export default function OnboardingWizard() {
 									onChange={(e) => setPlayers(Number(e.target.value))}
 									className="w-full rounded-lg border border-black/10 dark:border-white/10 bg-white/90 dark:bg-black/40 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
 								/>
-							</div>
-							<div className="md:col-span-2">
-								<label className="block text-sm mb-2">Klassen</label>
-								<div className="flex flex-wrap gap-2">
-									{classOptions.map((c) => (
-										<button
-											type="button"
-											key={c}
-											onClick={() => handleToggleClass(c)}
-											className={
-												"px-3 py-1 rounded-full border text-sm transition-colors " +
-												(classes.includes(c)
-													? "bg-indigo-600 text-white border-indigo-600"
-													: "bg-white/80 dark:bg-black/30 text-current border-black/10 dark:border-white/10 hover:border-indigo-400")
-											}
-										>
-											{c}
-										</button>
-									))}
-								</div>
-								<p className="text-xs mt-1 opacity-70">Mindestens eine Klasse auswählen.</p>
+								<p className="text-xs mt-1 opacity-70">Du kannst 1-6 Charaktere gleichzeitig steuern.</p>
 							</div>
 						</div>
 					</section>
@@ -339,23 +393,37 @@ export default function OnboardingWizard() {
 
 				{step === 6 && (
 					<section className="space-y-4">
-						<h2 className="text-xl font-semibold">Klasse wählen</h2>
-						<p className="text-sm opacity-80">Wählen Sie eine Klasse für Ihren Hauptcharakter:</p>
+				<h2 className="text-xl font-semibold">Klasse wählen</h2>
+					<p className="text-sm opacity-80">Wähle eine Klasse – Spieler {currentPlayerIndex + 1} von {players}:</p>
 						<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 							{getAllCharacterClasses().map((cls) => (
-								<button
-									key={cls}
-									onClick={() => setSelectedClass(cls)}
-									className={
-										"rounded-xl p-4 border text-left transition " +
-										(selectedClass === cls
-											? "border-indigo-500 bg-indigo-50/60 dark:bg-indigo-900/20"
-											: "border-black/10 dark:border-white/10 bg-white/70 dark:bg-black/30 hover:border-indigo-400")
-									}
-								>
-									<h3 className="font-semibold mb-1">{getClassDisplayName(cls)}</h3>
-									<p className="text-sm opacity-80">Spezialist für {cls === 'warrior' ? 'Nahkampf und Verteidigung' : cls === 'mage' ? 'arkane Magie und Sprüche' : cls === 'rogue' ? 'Heimlichkeit und Finesse' : cls === 'bard' ? 'Inspiration und Vielseitigkeit' : cls === 'paladin' ? 'göttliche Kraft und Schutz' : cls === 'ranger' ? 'Wildnis und Fernkampf' : cls === 'druid' ? 'Naturmagie und Verwandlung' : cls === 'monk' ? 'innere Kraft und Beweglichkeit' : 'okkulte Macht und Pakte'}</p>
-								</button>
+								<div key={cls} className="relative">
+									<button
+										onClick={() => setSelectedClass(cls)}
+										className={
+											"w-full rounded-xl p-4 border text-left transition " +
+											(selectedClass === cls
+												? "border-indigo-500 bg-indigo-50/60 dark:bg-indigo-900/20"
+												: "border-black/10 dark:border-white/10 bg-white/70 dark:bg-black/30 hover:border-indigo-400")
+										}
+									>
+										<h3 className="font-semibold mb-1 pr-8">{getClassDisplayName(cls)}</h3>
+										<p className="text-sm opacity-80">Spezialist für {cls === 'warrior' ? 'Nahkampf und Verteidigung' : cls === 'mage' ? 'arkane Magie und Sprüche' : cls === 'rogue' ? 'Heimlichkeit und Finesse' : cls === 'bard' ? 'Inspiration und Vielseitigkeit' : cls === 'paladin' ? 'göttliche Kraft und Schutz' : cls === 'ranger' ? 'Wildnis und Fernkampf' : cls === 'druid' ? 'Naturmagie und Verwandlung' : cls === 'monk' ? 'innere Kraft und Beweglichkeit' : 'okkulte Macht und Pakte'}</p>
+									</button>
+									<button
+										onClick={(e) => {
+											e.stopPropagation();
+											setModalClass(cls);
+											setShowClassModal(true);
+										}}
+										className="absolute top-2 right-2 p-2 text-gray-500 hover:text-indigo-600 hover:bg-white/50 dark:hover:bg-black/50 rounded-lg transition-colors"
+										title="Detaillierte Klassen-Info"
+									>
+										<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+										</svg>
+									</button>
+								</div>
 							))}
 						</div>
 					</section>
@@ -363,30 +431,44 @@ export default function OnboardingWizard() {
 
 				{step === 7 && (
 					<section className="space-y-4">
-						<h2 className="text-xl font-semibold">Rasse wählen</h2>
-						<p className="text-sm opacity-80">Wählen Sie eine Rasse für Ihren Charakter:</p>
+				<h2 className="text-xl font-semibold">Rasse wählen</h2>
+					<p className="text-sm opacity-80">Wähle eine Rasse – Spieler {currentPlayerIndex + 1} von {players}:</p>
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							{getAllRaces().map((race) => {
 								const raceInfo = getRaceInfo(race);
 								const traits = getRacialTraits(race);
 								return (
-									<button
-										key={race}
-										onClick={() => setSelectedRace(race)}
-										className={
-											"rounded-xl p-4 border text-left transition " +
-											(selectedRace === race
-												? "border-indigo-500 bg-indigo-50/60 dark:bg-indigo-900/20"
-												: "border-black/10 dark:border-white/10 bg-white/70 dark:bg-black/30 hover:border-indigo-400")
-										}
-									>
-										<h3 className="font-semibold mb-1">{getRaceDisplayName(race)}</h3>
-										<p className="text-sm opacity-80 mb-2">{raceInfo.description}</p>
-										<div className="text-xs opacity-70">
-											<span className="font-medium">Fähigkeiten:</span> {traits.slice(0, 2).map(t => t.name).join(', ')}
-											{traits.length > 2 && ` +${traits.length - 2} weitere`}
-										</div>
-									</button>
+									<div key={race} className="relative">
+										<button
+											onClick={() => setSelectedRace(race)}
+											className={
+												"w-full rounded-xl p-4 border text-left transition " +
+												(selectedRace === race
+													? "border-indigo-500 bg-indigo-50/60 dark:bg-indigo-900/20"
+													: "border-black/10 dark:border-white/10 bg-white/70 dark:bg-black/30 hover:border-indigo-400")
+											}
+										>
+											<h3 className="font-semibold mb-1 pr-8">{getRaceDisplayName(race)}</h3>
+											<p className="text-sm opacity-80 mb-2">{raceInfo.description}</p>
+											<div className="text-xs opacity-70">
+												<span className="font-medium">Fähigkeiten:</span> {traits.slice(0, 2).map(t => t.name).join(', ')}
+												{traits.length > 2 && ` +${traits.length - 2} weitere`}
+											</div>
+										</button>
+										<button
+											onClick={(e) => {
+												e.stopPropagation();
+												setModalRace(race);
+												setShowRaceModal(true);
+											}}
+											className="absolute top-2 right-2 p-2 text-gray-500 hover:text-indigo-600 hover:bg-white/50 dark:hover:bg-black/50 rounded-lg transition-colors"
+											title="Detaillierte Rassen-Info"
+										>
+											<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+											</svg>
+										</button>
+									</div>
 								);
 							})}
 						</div>
@@ -395,8 +477,8 @@ export default function OnboardingWizard() {
 
 				{step === 8 && (
 					<section className="space-y-4">
-						<h2 className="text-xl font-semibold">Geschlecht & Portrait</h2>
-						<p className="text-sm opacity-80">Wählen Sie das Geschlecht für Ihren Charakter:</p>
+				<h2 className="text-xl font-semibold">Geschlecht & Portrait</h2>
+					<p className="text-sm opacity-80">Geschlecht & Portrait – Spieler {currentPlayerIndex + 1} von {players}:</p>
 						
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
 							{getAllGenders().map((gender) => (
@@ -426,8 +508,8 @@ export default function OnboardingWizard() {
 										height={128}
 										className="w-32 h-32 rounded-xl border-4 border-indigo-500"
 										onError={(e) => {
-											// Fallback if portrait doesn't exist
-											e.currentTarget.src = '/portraits/placeholder.svg';
+											// Fallback if portrait doesn't exist (should rarely happen now)
+											e.currentTarget.src = '/portraits/warrior/warrior_human_male.png';
 										}}
 									/>
 									<p className="text-sm opacity-80 mt-2">
@@ -439,24 +521,64 @@ export default function OnboardingWizard() {
 					</section>
 				)}
 
-				<FooterNav
+								<FooterNav
 					step={step}
 					canContinue={canContinue}
 					loading={loading}
 					charLoading={charLoading}
 					onBack={back}
-					onContinue={() => {
-						if (step < 4) return advance();
-						if (step === 4) return generateScenarios();
-						if (step === 5) return advance(); // Move to character creation
-						if (step === 6) return advance(); // Move to race selection
-						if (step === 7) return advance(); // Move to gender selection
-						if (step === 8) return confirmScenarioAndGenerateCharacters(); // Final step
-					}}
+									onContinue={() => {
+												if (step < 4) return advance();
+												if (step === 4) return generateScenarios();
+												if (step === 5) return advance(); // Move to character creation
+												if (step === 6) return advance(); // Move to race selection
+												if (step === 7) return advance(); // Move to gender selection
+												if (step === 8) {
+													// Save current player's selections
+													if (selectedClass && selectedRace && selectedGender) {
+														const next: Array<{class: CharacterClass; race: Race; gender: Gender}> = [...playerChoices];
+														next[currentPlayerIndex] = { class: selectedClass, race: selectedRace, gender: selectedGender };
+														setPlayerChoices(next);
+													}
+													// Next player or finish
+													if (currentPlayerIndex + 1 < players) {
+														setCurrentPlayerIndex((i) => i + 1);
+														setSelectedClass(null);
+														setSelectedRace(null);
+														setSelectedGender(null);
+														setStep(6);
+														return;
+													}
+																	return confirmScenarioAndGenerateCharacters();
+												}
+															}}
 					onGenerateScenarios={generateScenarios}
-					onConfirmScenario={confirmScenarioAndGenerateCharacters}
 				/>
 			</div>
+
+			{/* Class Info Modal */}
+			{modalClass && (
+				<ClassInfoModal
+					isOpen={showClassModal}
+					onClose={() => {
+						setShowClassModal(false);
+						setModalClass(null);
+					}}
+					characterClass={modalClass}
+				/>
+			)}
+
+			{/* Race Info Modal */}
+			{modalRace && (
+				<RaceInfoModal
+					isOpen={showRaceModal}
+					onClose={() => {
+						setShowRaceModal(false);
+						setModalRace(null);
+					}}
+					race={modalRace}
+				/>
+			)}
 		</div>
 	);
 }
@@ -473,24 +595,68 @@ function StepIndicator({ step }: { step: number }) {
 		{ n: 8, t: "Charakter" },
 	];
 	return (
-		<ol className="flex items-center gap-2 mb-6">
-			{items.map((it) => (
-				<li key={it.n} className="flex items-center gap-2">
-					<span
-						className={
-							"size-7 rounded-full text-xs grid place-items-center " +
-							(step >= it.n
-								? "bg-indigo-600 text-white"
-								: "bg-black/10 dark:bg-white/10 text-black/60 dark:text-white/60")
-						}
-					>
-						{it.n}
-					</span>
-					<span className="text-sm opacity-80 hidden sm:inline">{it.t}</span>
-					{it.n < items.length && <span className="w-8 h-px bg-black/10 dark:bg-white/10" />}
-				</li>
-			))}
-		</ol>
+		<div className="mb-6 w-full">
+			{/* Mobile: Horizontal scrollable indicator */}
+			<div className="flex sm:hidden overflow-x-auto pb-2 gap-1">
+				{items.map((it) => (
+					<div key={it.n} className="flex items-center gap-1 min-w-max">
+						<span
+							className={
+								"size-8 rounded-full text-xs flex-shrink-0 grid place-items-center font-medium " +
+								(step >= it.n
+									? "bg-indigo-600 text-white"
+									: "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400")
+							}
+						>
+							{it.n}
+						</span>
+						<span className={
+							"text-xs font-medium min-w-max " +
+							(step >= it.n ? "text-indigo-600 dark:text-indigo-400" : "text-gray-500 dark:text-gray-400")
+						}>
+							{it.t}
+						</span>
+						{it.n < items.length && (
+							<div className="w-6 h-px bg-gray-300 dark:bg-gray-600 mx-2 flex-shrink-0" />
+						)}
+					</div>
+				))}
+			</div>
+			
+			{/* Desktop: Full indicator with proper spacing */}
+			<ol className="hidden sm:flex items-center justify-center gap-3 lg:gap-4">
+				{items.map((it) => (
+					<li key={it.n} className="flex items-center gap-2 lg:gap-3">
+						<span
+							className={
+								"size-8 lg:size-9 rounded-full text-xs lg:text-sm font-medium grid place-items-center transition-colors " +
+								(step >= it.n
+									? "bg-indigo-600 text-white shadow-lg"
+									: "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400")
+							}
+						>
+							{it.n}
+						</span>
+						<span className={
+							"text-sm lg:text-base font-medium transition-colors " +
+							(step >= it.n ? "text-indigo-600 dark:text-indigo-400" : "text-gray-500 dark:text-gray-400")
+						}>
+							{it.t}
+						</span>
+						{it.n < items.length && (
+							<div className="w-8 lg:w-12 h-px bg-gray-300 dark:bg-gray-600 transition-colors" />
+						)}
+					</li>
+				))}
+			</ol>
+			
+			{/* Progress indicator for mobile */}
+			<div className="flex sm:hidden items-center justify-center mt-3">
+				<span className="text-xs text-gray-500 dark:text-gray-400">
+					Step {step} of {items.length}
+				</span>
+			</div>
+		</div>
 	);
 }
 
@@ -531,7 +697,6 @@ function FooterNav({
 	onBack,
 	onContinue,
 	onGenerateScenarios,
-	onConfirmScenario,
 }: {
 	step: number;
 	canContinue: boolean;
@@ -540,7 +705,6 @@ function FooterNav({
 	onBack: () => void;
 	onContinue: () => void;
 	onGenerateScenarios: () => void;
-	onConfirmScenario: () => void;
 }) {
 	const isBusy = loading || charLoading;
 	return (
@@ -598,11 +762,11 @@ function FooterNav({
 				{step === 8 && (
 					<button
 						type="button"
-						onClick={onConfirmScenario}
+						onClick={onContinue}
 						disabled={!canContinue || isBusy}
 						className="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
 					>
-						{isBusy ? "Erstelle…" : "Abenteuer starten"}
+						{isBusy ? "Erstelle…" : "Weiter"}
 					</button>
 				)}
 			</div>

@@ -1,11 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGameStore } from '@/lib/state/gameStore';
 import { useTranslation } from '@/lib/hooks/useTranslation';
+import { AudioControls } from '@/app/components/AudioControls';
+import { audioManager } from '@/lib/audio/audioManager';
 import type { AppSettings } from '@/lib/state/gameStore';
 
 export default function SettingsPage() {
+  // Start menu/settings soundtrack when opening settings
+  useEffect(() => {
+    (async () => {
+      try {
+        await audioManager.changeScene('menu');
+      } catch {}
+    })();
+    return () => {
+      // When navigating back to main menu via back button, restore main menu music
+      const step = useGameStore.getState().step;
+      if (step === 'mainMenu') {
+        audioManager.changeScene('main_menu');
+      }
+    };
+  }, []);
   const { settings, updateSettings, resetToStartPage } = useGameStore();
   const { t } = useTranslation();
   const [hasChanges, setHasChanges] = useState(false);
@@ -18,6 +35,16 @@ export default function SettingsPage() {
   ) => {
     updateSettings({ [key]: value });
     setHasChanges(true);
+
+    // Reflect audio on/off immediately in the audio manager
+    if (key === 'enableSoundEffects' && typeof value === 'boolean') {
+      audioManager.setEnabled(value);
+      // If enabling, gently resume current scene music
+      if (value) {
+        const scene = audioManager.getCurrentScene() || 'menu';
+        audioManager.changeScene(scene);
+      }
+    }
   };
 
   const resetToDefaults = () => {
@@ -281,6 +308,12 @@ export default function SettingsPage() {
                   <p>{t('settings.ai.privacy.description')}</p>
                 </div>
               </div>
+            </div>
+            
+            {/* Audio Controls Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-amber-900">Audio Controls</h3>
+              <AudioControls showSceneSelector={true} />
             </div>
           </div>
 

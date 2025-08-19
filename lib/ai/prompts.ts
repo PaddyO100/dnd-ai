@@ -180,7 +180,8 @@ Alle Texte auf DEUTSCH. Gib NUR JSON zurück:
     "party":   [ { "name": "string", "hpDelta": number, "status?": "string" } ],
     "inventory":[ { "op": "add|remove", "item": "string" } ],
     "quests":  [ { "op": "add|update|complete", "title": "string", "note?": "string" } ]
-  }
+  },
+  "diceRequests": [ { "formula": "string", "reason": "string" } ]
 }
 
 ERWEITERTE AI DIRECTOR GUIDANCE:
@@ -219,6 +220,17 @@ ERWEITERTE AI DIRECTOR GUIDANCE:
 - Sofort: Spotlight-Ungleichgewicht, niedrige Energie
 - Bald: Pacing-Wechsel, Spannungsaufbau
 - Langfristig: Charakterentwicklung, übergeordnete Plots
+
+👥 CHARAKTERANSPRACHE (WICHTIG):
+- IMMER den aktiven Charakter beim Namen nennen: "Liora, du siehst..." oder "Theron, dir fällt auf..."
+- Bei mehreren Charakteren: Individuelle Reaktionen beschreiben
+- Bei Gruppensituationen: Verschiedene Charaktere unterschiedlich ansprechen
+- Nutze die Charakternamen aus dem "party" Array im state
+
+🎲 WÜRFELWÜRFE:
+- Bei Aktionen die Geschick/Glück erfordern: "diceRequests" verwenden
+- Klare Begründung im "reason" Feld
+- Angemessene Schwierigkeit basierend auf Charakterstärken
 
 Beachte die bisherigen Ereignisse (history) und den Zustand (state).
 Nutze diese Guidance für natürliche, fließende Erzählung.

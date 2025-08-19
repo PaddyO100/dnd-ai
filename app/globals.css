@@ -235,7 +235,8 @@ h1, h2, h3, h4, h5, h6 {
   transition: all 0.3s ease;
   min-height: calc(100vh - 2rem);
   width: 100%;
-  max-width: 1600px; /* Increased from 7xl (1280px) to prevent text cutoff */
+  /* Fluid width: adapt to viewport, capped for readability */
+  max-width: min(96vw, 1600px);
 }
 
 .card { 

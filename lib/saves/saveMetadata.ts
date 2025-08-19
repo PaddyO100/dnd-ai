@@ -82,7 +82,7 @@ export class SaveMetadataManager {
 
     // Quest progress
     if (gameState.quests?.length > 0) {
-      const completedQuests = gameState.quests.filter(q => q.status === 'done').length;
+      const completedQuests = gameState.quests.filter(q => q.status === 'completed').length;
       metadata.questProgress = {
         total: gameState.quests.length,
         completed: completedQuests,

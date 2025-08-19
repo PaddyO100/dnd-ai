@@ -8,7 +8,8 @@ const Input = z.object({
   frame: z.string(),
   world: z.object({ magic: z.string(), tech: z.string(), climate: z.string() }),
   players: z.number().min(1).max(6),
-  classes: z.array(z.string()).min(1),
+  // Classes are optional now; characters can be chosen later
+  classes: z.array(z.string()).default([]),
   startingWeapons: z.array(z.string()).optional(),
   // aiModel removed; model is taken from environment
 })
@@ -39,7 +40,7 @@ export async function POST(req: Request) {
       return NextResponse.json(mock())
     }
 
-    const chat = await openrouter.chat.completions.create({
+  const chat = await openrouter.chat.completions.create({
       model: selectedModel,
       messages: [
         { role: 'system', content: SYSTEM_SCENARIO },
@@ -62,8 +63,16 @@ export async function POST(req: Request) {
     if (status === 402 || msg.includes('402') || /insufficient credits/i.test(msg)) {
       return NextResponse.json(mock())
     }
+    // Provider throttling or server errors -> graceful mock fallback
+    if (status === 429 || (typeof status === 'number' && status >= 500)) {
+      return NextResponse.json(mock())
+    }
     // Other transport errors -> still try to continue to JSON cleanup (raw stays '{}')
     console.error('OpenRouter request failed (scenarios):', err)
+  }
+  // If nothing useful came back, return mock immediately
+  if (!raw || raw.trim() === '{}' || raw.trim() === '') {
+    return NextResponse.json(mock())
   }
   
   // Enhanced JSON parsing with cleanup
@@ -81,7 +90,7 @@ export async function POST(req: Request) {
       cleanedJson = cleanedJson.substring(jsonStart, jsonEnd + 1)
     }
     
-    const json = JSON.parse(cleanedJson)
+  const json = JSON.parse(cleanedJson)
     
     // Fix inconsistent field naming: convert "map" to "mapIdea"
     if (json.scenarios && Array.isArray(json.scenarios)) {
@@ -101,15 +110,14 @@ export async function POST(req: Request) {
           mapIdea: z.string(),
         })).min(1),
       })
-    const out = ScenarioSchema.parse(json)
-    return NextResponse.json(out)
+    const parsed = ScenarioSchema.safeParse(json)
+    if (!parsed.success) {
+      console.warn('Scenario JSON invalid, falling back to mock:', parsed.error?.issues)
+      return NextResponse.json(mock())
+    }
+    return NextResponse.json(parsed.data)
   } catch (parseError) {
-    console.error('JSON parsing failed:', parseError)
-    console.error('Raw response:', raw)
-    return NextResponse.json({ 
-      error: 'Fehler beim Generieren der Szenarien. Bitte versuchen Sie es erneut.', 
-      details: 'Bad JSON from model',
-      raw 
-    }, { status: 502 })
+    console.error('JSON parsing failed (scenarios), using mock fallback:', parseError)
+    return NextResponse.json(mock())
   }
 }

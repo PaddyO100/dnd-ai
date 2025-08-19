@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { audioManager } from '@/lib/audio/audioManager';
 
 interface VisualDiceProps {
   isOpen: boolean;
@@ -43,6 +44,9 @@ export default function VisualDice({ isOpen, onClose }: VisualDiceProps) {
     
     const { count, sides, modifier } = parseFormula(formula);
     
+    // Play dice roll sound at the start
+    audioManager.playUISound('dice');
+    
     // Create dice
     const newDice = Array.from({ length: count }, (_, i) => ({
       id: `dice-${i}-${Date.now()}`,
@@ -53,20 +57,10 @@ export default function VisualDice({ isOpen, onClose }: VisualDiceProps) {
     setDice(newDice);
     
     // Simulate rolling animation
-    const rollDuration = 2000;
-    const rollInterval = setInterval(() => {
-      setDice(prev => prev.map(d => ({
-        ...d,
-        value: Math.floor(Math.random() * sides) + 1,
-      })));
-    }, 100);
-    
+    const rollDuration = 1200;
     setTimeout(() => {
-      clearInterval(rollInterval);
-      
-      // Final roll
-      const finalDice = newDice.map(d => ({
-        ...d,
+      const finalDice = newDice.map(die => ({
+        ...die,
         value: Math.floor(Math.random() * sides) + 1,
         rolling: false,
       }));
@@ -77,8 +71,10 @@ export default function VisualDice({ isOpen, onClose }: VisualDiceProps) {
       setResult(total);
       setIsRolling(false);
       
-      // Play sound effect if available
-      // playSound('dice-roll');
+      // Play dice landing sound when dice stop
+      setTimeout(() => {
+        audioManager.playUISound('dice_land');
+      }, 200);
     }, rollDuration);
   }
 

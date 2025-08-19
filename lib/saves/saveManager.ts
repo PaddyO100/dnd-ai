@@ -481,6 +481,46 @@ class SaveManager {
       lastSaveTime: lastSaveTime > 0 ? lastSaveTime : null
     };
   }
+
+  // Get all saves as metadata list for MainMenu
+  async getAllSaves(): Promise<SaveMetadata[]> {
+    const slots = this.getAllSlots();
+    const saves: SaveMetadata[] = [];
+    
+    for (const slot of slots) {
+      if (!slot.isEmpty && slot.save) {
+        saves.push({
+          ...slot.save.metadata,
+          id: `save_slot_${slot.id}` // Add consistent ID format for MainMenu
+        });
+      }
+    }
+    
+    // Sort by timestamp (newest first)
+    return saves.sort((a, b) => b.timestamp - a.timestamp);
+  }
+
+  // Delete a save by slot number
+  async deleteSave(slotNumber: number): Promise<void> {
+    try {
+      const saveKey = `${this.STORAGE_PREFIX}slot_${slotNumber}`;
+      
+      // Check if save exists
+      const saveData = this.getStorageItem(saveKey);
+      if (!saveData) {
+        throw new Error(`No save found in slot ${slotNumber}`);
+      }
+      
+      // Remove from storage
+      this.removeStorageItem(saveKey);
+      
+      // Remove from metadata index
+      this.removeFromMetadataIndex(slotNumber);
+      
+    } catch (error) {
+      throw new Error(`Failed to delete save: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
 }
 
 export const saveManager = new SaveManager();

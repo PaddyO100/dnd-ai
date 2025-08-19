@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useGameStore } from '@/lib/state/gameStore';
+import { audioManager } from '@/lib/audio/audioManager';
 import { predefinedCampaigns } from '@/data/campaigns';
 import type { PredefinedCampaign } from '@/lib/state/gameStore';
 
@@ -45,7 +46,7 @@ export default function CampaignSelection() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50">
-      <div className="container-page space-y-8 py-12">
+  <div className="container-page space-y-8 py-12">
         {/* Header */}
         <div className="text-center space-y-4">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full mb-4">
@@ -59,10 +60,22 @@ export default function CampaignSelection() {
           <p className="text-lg text-amber-800 max-w-2xl mx-auto">
             Beginne mit einer vorgefertigten Kampagne oder erschaffe deine eigene Welt
           </p>
+          <div className="flex items-center justify-center mt-2">
+            <button
+              onClick={() => { audioManager.playUISound('button'); useGameStore.getState().setMainMenuStep(); }}
+              className="btn-secondary flex items-center gap-2"
+              title="Startseite"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m0 0V11a1 1 0 011-1h2a1 1 0 011 1v10m0 0h3a1 1 0 001-1V10M9 21h6" />
+              </svg>
+              Home
+            </button>
+          </div>
         </div>
 
         {/* Campaign Grid */}
-        <div className="max-w-6xl mx-auto">
+  <div className="mx-auto w-full max-w-[min(96vw,1500px)]">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {predefinedCampaigns.map((campaign) => (
               <div

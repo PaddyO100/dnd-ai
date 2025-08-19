@@ -11,7 +11,7 @@ import SavesTab from './tabs/SavesTab';
 import InventoryTab from './tabs/InventoryTab';
 import SkillsTab from './tabs/SkillsTab';
 
-type Tab = 'character' | 'inventory' | 'skills' | 'spells' | 'quests' | 'director' | 'dice' | 'saves';
+type Tab = 'character' | 'inventory' | 'skills' | 'spells' | 'quests' | 'director' | 'saves';
 
 
 interface BarProps {
@@ -82,11 +82,14 @@ export default function Sidepanel() {
               }`}
               onClick={() => { setActiveId(p.id); setSelectedPlayer(p.id); }}
             >
-              {p.portraitUrl ? (
-                <Image unoptimized src={p.portraitUrl} alt={p.name} width={32} height={40} className="w-8 h-10 rounded object-cover border-2 border-amber-300" />
-              ) : (
-                <div className="w-8 h-10 rounded bg-amber-100 border-2 border-amber-300 grid place-items-center text-[10px] text-amber-600">—</div>
-              )}
+              <Image 
+                unoptimized 
+                src={p.portraitUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=amber&color=fff&size=128&font-size=0.5`}
+                alt={p.name}
+                width={32}
+                height={40}
+                className="w-8 h-10 rounded object-cover border-2 border-amber-300" 
+              />
               <div className="min-w-[60px]">
                 <div className="font-medium leading-3 text-amber-900">{p.name}</div>
                 <div className="flex flex-col gap-0.5">
@@ -100,8 +103,8 @@ export default function Sidepanel() {
       )}
 
 
-      <div className="grid grid-cols-4 gap-2">
-  {(['character', 'inventory', 'skills', 'spells', 'quests', 'director', 'dice', 'saves'] as const).map((t) => (
+    <div className="grid grid-cols-4 gap-2">
+  {(['character', 'inventory', 'skills', 'spells', 'quests', 'director', 'saves'] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -115,7 +118,6 @@ export default function Sidepanel() {
             {t === 'spells' && 'Zauber'}
             {t === 'quests' && 'Quests'}
             {t === 'director' && 'Director'}
-            {t === 'dice' && 'Würfel'}
             {t === 'saves' && 'Spielstände'}
           </button>
         ))}
@@ -162,12 +164,10 @@ export default function Sidepanel() {
 
   {/* Map tab removed */}
 
-      {tab === 'director' && <DirectorTab directorState={directorState} />}
-
-      {tab === 'dice' && <DiceBox />}
+  {tab === 'director' && <DirectorTab directorState={directorState} />}
 
   {tab === 'saves' && <SavesTab />}
-    </aside>
+  </aside>
   );
 }
 
@@ -204,13 +204,14 @@ function CharacterTab(props: {
     <div className="space-y-4 text-sm max-h-96 overflow-y-auto scroll-fantasy pr-2">
       {/* Character Header */}
       <div className="flex items-center gap-4 p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg">
-        {portraitUrl ? (
-          <Image unoptimized src={portraitUrl} alt={name} width={80} height={100} className="w-20 h-24 rounded-lg object-cover border-2 border-amber-300 shadow-md" />
-        ) : (
-          <div className="w-20 h-24 rounded-lg bg-amber-100 border-2 border-amber-300 grid place-items-center text-xs text-amber-600">
-            kein Bild
-          </div>
-        )}
+        <Image 
+          unoptimized 
+          src={portraitUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=amber&color=fff&size=256&font-size=0.5`}
+          alt={name}
+          width={80}
+          height={100}
+          className="w-20 h-24 rounded-lg object-cover border-2 border-amber-300 shadow-md" 
+        />
         <div className="flex-1">
           <div className="font-bold text-lg text-amber-900">{name}</div>
           <div className="text-amber-700 font-medium">{cls}</div>

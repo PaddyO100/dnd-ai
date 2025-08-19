@@ -341,13 +341,62 @@ export function generateLoot(
 }
 
 /**
+ * Bestimmt automatisch den korrekten Subtype basierend auf Item-Typ und Name
+ */
+function determineSubtype(template: ItemTemplate): InventoryItem['subtype'] {
+  if (template.subtype && template.subtype !== 'none') {
+    return template.subtype;
+  }
+  
+  // Auto-bestimmung für Waffen
+  if (template.type === 'weapon') {
+    const name = template.name.toLowerCase();
+    
+    // Zweihändige Waffen
+    if (name.includes('zweihänder') || name.includes('bogen') || name.includes('streitaxt') || 
+        name.includes('hellebarde') || name.includes('kampfstab') || template.description.includes('zweihändig')) {
+      return 'two_handed';
+    }
+    
+    // Nebenhand-Waffen (kleine, leichte Waffen)
+    if (name.includes('dolch') || name.includes('wurfmesser') || name.includes('stilett') ||
+        template.description.includes('leicht')) {
+      return 'off_hand';
+    }
+    
+    // Standard: Haupthand
+    return 'main_hand';
+  }
+  
+  // Auto-bestimmung für Rüstung
+  if (template.type === 'armor') {
+    const name = template.name.toLowerCase();
+    
+    if (name.includes('helm')) return 'helmet';
+    if (name.includes('brustpanzer') || name.includes('rüstung') || name.includes('panzer')) return 'chest';
+    if (name.includes('beinschutz') || name.includes('hose')) return 'legs';
+    if (name.includes('stiefel') || name.includes('schuhe')) return 'feet';
+    if (name.includes('handschuhe') || name.includes('stulpen')) return 'gloves';
+    if (name.includes('umhang') || name.includes('mantel')) return 'cloak';
+    if (name.includes('gürtel')) return 'belt';
+    if (name.includes('ring')) return 'ring';
+    if (name.includes('amulett') || name.includes('anhänger')) return 'amulet';
+    
+    // Standard Rüstung geht an Chest
+    return 'chest';
+  }
+  
+  return 'none';
+}
+
+/**
  * Erstellt Item aus Template
  */
 function createItemFromTemplate(template: ItemTemplate): InventoryItem {
   return {
     name: template.name,
     type: template.type,
-    subtype: template.subtype || 'none',
+    subtype: determineSubtype(template),
     location: 'inventory',
     rarity: template.rarity,
     quantity: 1,
@@ -443,14 +492,30 @@ export function generateStartingGear(className: string): InventoryItem[] {
   
   const gearList = startingGear[className.toLowerCase()] || startingGear.warrior;
   
-  return gearList.map(itemKey => {
+  const items = gearList.map((itemKey, index) => {
     const template = itemDatabase[itemKey];
     if (!template) {
       console.warn(`Item template not found: ${itemKey}`);
       return null;
     }
-    return createItemFromTemplate(template);
+    
+    const item = createItemFromTemplate(template);
+    
+    // Auto-equip primary weapons and armor
+    if (template.type === 'weapon' && index === 0) {
+      // First weapon gets equipped
+      item.equipped = true;
+      item.location = 'equipped';
+    } else if (template.type === 'armor') {
+      // Armor gets equipped
+      item.equipped = true;
+      item.location = 'equipped';
+    }
+    
+    return item;
   }).filter(Boolean) as InventoryItem[];
+  
+  return items;
 }
 
 /**
