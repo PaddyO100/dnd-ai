@@ -188,6 +188,7 @@ export default function OnboardingWizard() {
 			if (!party.length) throw new Error("Keine Charaktere erhalten.");
 
 			// Generate AI quests (with fallback server-side) and apply to store via Effects
+			let quests: NewQuestLike[] = [];
 			try {
 				const qRes = await fetch('/api/ai/generate-quests', {
 					method: 'POST',
@@ -199,32 +200,29 @@ export default function OnboardingWizard() {
 					})
 				})
 				const qJson = await qRes.json()
-				const quests: NewQuestLike[] = Array.isArray(qJson.quests) ? qJson.quests : []
-
-				// start the game first so store is ready, then add quests via Effects (deterministic)
-				startGame(selectedScenario, party)
-				if (quests.length) {
-					const effects: Effects = {
-						quests: quests.map((q: NewQuestLike) => ({
-							op: 'add',
-							title: String(q.title),
-							note: q.note || q.description,
-							category: q.category,
-							priority: q.priority,
-							status: q.status,
-							progress: q.progress
-						}))
-					}
-					// Apply after a microtask to ensure state is initialized
-					setTimeout(() => pushHistory({ role: 'dm', content: `Quests vorbereitet: ${quests.length}` }), 0)
-					setTimeout(() => applyEffects(effects), 0)
-				}
+				quests = Array.isArray(qJson.quests) ? qJson.quests : []
 			} catch {
-				// Fallback: start game without AI quests; startGame seeds local quests
-				startGame(selectedScenario, party)
+				// fallback: no quests
 			}
-
-			pushHistory({ role: "dm", content: `Willkommen zum Abenteuer: ${selectedScenario.title}. ${selectedScenario.summary}` });
+			// Start the game and clear any previous quests
+			startGame(selectedScenario, party)
+			if (quests.length) {
+				const effects: Effects = {
+					quests: quests.map((q: NewQuestLike) => ({
+						op: 'add',
+						title: String(q.title),
+						note: q.note || q.description,
+						category: q.category,
+						priority: q.priority,
+						status: q.status,
+						progress: q.progress
+					}))
+				}
+				// Apply after a microtask to ensure state is initialized
+				setTimeout(() => applyEffects(effects), 0)
+				setTimeout(() => pushHistory({ role: 'dm', content: `Quests vorbereitet: ${quests.length}` }), 10)
+			}
+			setTimeout(() => pushHistory({ role: "dm", content: `Willkommen zum Abenteuer: ${selectedScenario.title}. ${selectedScenario.summary}` }), 20);
 			} catch (e: unknown) {
 				const msg = e instanceof Error ? e.message : "Unbekannter Fehler bei der Charakter-Erzeugung";
 				setError(msg);

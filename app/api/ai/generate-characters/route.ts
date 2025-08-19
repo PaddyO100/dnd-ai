@@ -49,9 +49,8 @@ export async function POST(req: Request) {
   // Map localized class display names to internal slugs
   const classNameToSlug = (cls?: string): CharacterClass | undefined => {
     if (!cls) return undefined as unknown as CharacterClass
-    const c = cls.toLowerCase()
+    const c = String(cls).toLowerCase().replace(/\s|_/g, '')
     const map: Record<string, CharacterClass> = {
-      // German → slug
       'krieger': 'warrior',
       'magier': 'mage',
       'schurke': 'rogue',
@@ -59,12 +58,10 @@ export async function POST(req: Request) {
       'paladin': 'paladin',
       'waldläufer': 'ranger',
       'waldlaeufer': 'ranger',
-      // common encoding fallbacks
       'druide': 'druid',
       'mönch': 'monk',
       'monch': 'monk',
       'hexenmeister': 'warlock',
-      // English passthrough
       'warrior': 'warrior',
       'mage': 'mage',
       'rogue': 'rogue',
@@ -74,7 +71,7 @@ export async function POST(req: Request) {
       'monk': 'monk',
       'warlock': 'warlock',
     }
-    return map[c]
+    return map[c] || (cls as CharacterClass)
   }
 
   type RawEffect = { type?: string; value?: number | string; description?: string }
@@ -140,37 +137,37 @@ export async function POST(req: Request) {
 
   // Helper: mock party when credits are unavailable
   const mockParty = () => {
-    const base = (i: number) => ({
-      id: `char_${Date.now()}_${i}`,
-      name: generateFantasyName(
-        (data.playerSelections?.[i]?.race as Race) || 'human',
-        (data.playerSelections?.[i]?.gender as Gender) || (i % 2 === 0 ? 'male' as Gender : 'female' as Gender),
-        data.scenario?.title
-      ),
-      cls: (data.playerSelections?.[i]?.class || data.classes?.[i] || 'warrior') as CharacterClass,
-      hp: 10 + (i % 3),
-      maxHp: 10 + (i % 3),
-      mp: 7 + (i % 3),
-      maxMp: 7 + (i % 3),
-      level: 1,
-      experience: 0,
-      stats: { STR: 12, DEX: 10, CON: 11, INT: 10, WIS: 9, CHA: 12 },
-      armorClass: 12,
-      skills: [
-        { name: "Schwertkampf", level: 2, max: 5, description: "Geübter Nahkampf" }
-      ],
-      spells: [],
-      traits: [ { name: "Mutig", description: "Weicht selten zurück", type: "class" } ],
-      inventory: [ { name: "Heiltrank", type: "misc", quantity: 1, description: "Stellt 5 HP her", equipped: false } ],
-      conditions: [],
-      backstory: { origin: "Dorf", personality: "Loyal", motivation: "Ehre", flaw: "Übereilt", background: "Ein junger Abenteurer." },
-      portraitSeed: Math.floor(Math.random() * 1_000_000), // kept for deterministic portraits in future
-      portraitUrl: getPortraitUrl(
-        ((data.playerSelections?.[i]?.class || data.classes?.[i] || 'warrior') as string).toLowerCase() as CharacterClass,
-        ((data.playerSelections?.[i]?.race) as Race) || ('human' as Race),
-        ((data.playerSelections?.[i]?.gender) as Gender) || ((i % 2 === 0 ? 'male' : 'female') as Gender)
-      )
-    })
+    const base = (i: number) => {
+      const sel = (data.playerSelections?.[i] || {}) as {class?: string; race?: string; gender?: string};
+      const cls = classNameToSlug(sel.class || data.classes?.[i] || 'warrior') || 'warrior';
+      const race = (sel.race || 'human') as Race;
+      const gender = (sel.gender || (i % 2 === 0 ? 'male' : 'female')) as Gender;
+      return {
+        id: `char_${Date.now()}_${i}`,
+        name: generateFantasyName(race, gender, data.scenario?.title),
+        cls,
+        race,
+        gender,
+        hp: 10 + (i % 3),
+        maxHp: 10 + (i % 3),
+        mp: 7 + (i % 3),
+        maxMp: 7 + (i % 3),
+        level: 1,
+        experience: 0,
+        stats: { STR: 12, DEX: 10, CON: 11, INT: 10, WIS: 9, CHA: 12 },
+        armorClass: 12,
+        skills: [
+          { name: "Schwertkampf", level: 2, max: 5, description: "Geübter Nahkampf" }
+        ],
+        spells: [],
+        traits: [ { name: "Mutig", description: "Weicht selten zurück", type: "class" } ],
+        inventory: normalizeInventory([], cls),
+        conditions: [],
+        backstory: { origin: "Dorf", personality: "Loyal", motivation: "Ehre", flaw: "Übereilt", background: "Ein junger Abenteurer." },
+        portraitSeed: Math.floor(Math.random() * 1_000_000),
+        portraitUrl: getPortraitUrl(cls, race, gender)
+      }
+    }
     return { party: Array.from({ length: data.players }).map((_, i) => base(i)) }
   }
 
@@ -304,8 +301,8 @@ Gib NUR gültiges JSON zurück, ohne weiteren Text.
     if (parsed.party && Array.isArray(parsed.party)) {
       parsed.party = parsed.party.map((char: unknown, index: number) => {
         const c = (typeof char === 'object' && char !== null ? char : {}) as Record<string, unknown>;
-  const selection = data.playerSelections?.[index]
-  const clsSlug = (classNameToSlug(String(selection?.class || c.cls)) || 'warrior') as CharacterClass
+        const selection = (data.playerSelections?.[index] || {}) as {class?: string; race?: string; gender?: string};
+        const clsSlug = (classNameToSlug(String(selection?.class || c.cls)) || 'warrior') as CharacterClass
         const race: Race = (selection?.race as Race) || (c.race as Race) || ('human' as Race)
         const gender: Gender = (selection?.gender as Gender) || (c.gender as Gender) || ((index % 2 === 0 ? 'male' : 'female') as Gender)
         // Ensure all required fields exist with defaults
