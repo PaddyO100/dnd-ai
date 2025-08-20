@@ -3,7 +3,6 @@ import { z } from 'zod'
 import { openrouter, OPENROUTER_MODEL } from '@/lib/ai/openrouter'
 import { getPortraitUrl } from '@/lib/character/portraitSystem'
 import type { Race, Gender, CharacterClass, InventoryItem } from '@/schemas/character'
-import { itemTemplates } from '@/lib/character/characterGenerator'
 
 const Input = z.object({
   players: z.number().min(1).max(6),
@@ -75,6 +74,155 @@ export async function POST(req: Request) {
   }
 
   type RawEffect = { type?: string; value?: number | string; description?: string }
+  
+  // Define item templates for starter equipment  
+  const itemTemplates = {
+    langschwert: {
+      name: "Langschwert",
+      type: "weapon" as const,
+      subtype: "main_hand" as const,
+      rarity: "common" as const,
+      description: "Eine zuverlässige Waffe für den Nahkampf",
+      equipped: true,
+      location: "equipped" as const,
+      effects: [{ type: "damage_bonus" as const, value: 2, description: "+2 Schaden" }],
+      value: 50,
+      weight: 3
+    },
+    dolch: {
+      name: "Dolch",
+      type: "weapon" as const,
+      subtype: "main_hand" as const,
+      rarity: "common" as const,
+      description: "Schnell und tödlich",
+      equipped: true,
+      location: "equipped" as const,
+      effects: [{ type: "damage_bonus" as const, value: 1, description: "+1 Schaden" }],
+      value: 20,
+      weight: 1
+    },
+    bogen: {
+      name: "Bogen",
+      type: "weapon" as const,
+      subtype: "two_handed" as const,
+      rarity: "common" as const,
+      description: "Für den Fernkampf",
+      equipped: true,
+      location: "equipped" as const,
+      effects: [{ type: "damage_bonus" as const, value: 2, description: "+2 Fernkampfschaden" }],
+      value: 40,
+      weight: 2
+    },
+    zauberstab: {
+      name: "Zauberstab",
+      type: "weapon" as const,
+      subtype: "main_hand" as const,
+      rarity: "common" as const,
+      description: "Verstärkt magische Kräfte",
+      equipped: true,
+      location: "equipped" as const,
+      effects: [{ type: "spell" as const, value: "Magiemissil", description: "Ermöglicht Zaubersprüche" }],
+      value: 60,
+      weight: 1
+    },
+    lederschiene: {
+      name: "Lederschiene",
+      type: "armor" as const,
+      subtype: "chest" as const,
+      rarity: "common" as const,
+      description: "Leichte Schutzrüstung",
+      equipped: true,
+      location: "equipped" as const,
+      effects: [{ type: "stat_bonus" as const, value: 1, description: "+1 Rüstungsklasse" }],
+      value: 30,
+      weight: 5
+    },
+    heiltrank: {
+      name: "Heiltrank",
+      type: "consumable" as const,
+      subtype: "none" as const,
+      rarity: "common" as const,
+      description: "Stellt Lebenspunkte wieder her",
+      equipped: false,
+      location: "inventory" as const,
+      effects: [{ type: "passive" as const, value: "5 HP", description: "Heilt 5 Lebenspunkte" }],
+      value: 25,
+      weight: 0.5
+    },
+    manatrank: {
+      name: "Manatrank",
+      type: "consumable" as const,
+      subtype: "none" as const,
+      rarity: "common" as const,
+      description: "Stellt Manapunkte wieder her",
+      equipped: false,
+      location: "inventory" as const,
+      effects: [{ type: "passive" as const, value: "5 MP", description: "Stellt 5 Manapunkte wieder her" }],
+      value: 30,
+      weight: 0.5
+    },
+    zauberkomponenten: {
+      name: "Zauberkomponenten",
+      type: "tool" as const,
+      subtype: "none" as const,
+      rarity: "common" as const,
+      description: "Materialien für Zaubersprüche",
+      equipped: false,
+      location: "inventory" as const,
+      effects: [{ type: "passive" as const, value: "Zaubern", description: "Ermöglicht das Wirken von Sprüchen" }],
+      value: 15,
+      weight: 1
+    },
+    dietriche: {
+      name: "Dietriche",
+      type: "tool" as const,
+      subtype: "none" as const,
+      rarity: "common" as const,
+      description: "Zum Öffnen von Schlössern",
+      equipped: false,
+      location: "inventory" as const,
+      effects: [{ type: "passive" as const, value: "Schlösser öffnen", description: "Schlösser knacken" }],
+      value: 10,
+      weight: 0.2
+    },
+    seil: {
+      name: "Seil",
+      type: "tool" as const,
+      subtype: "none" as const,
+      rarity: "common" as const,
+      description: "10 Meter starkes Seil",
+      equipped: false,
+      location: "inventory" as const,
+      effects: [{ type: "passive" as const, value: "Klettern", description: "Zum Klettern und Sichern" }],
+      value: 5,
+      weight: 2
+    },
+    pfeile: {
+      name: "Pfeile",
+      type: "consumable" as const,
+      subtype: "none" as const,
+      rarity: "common" as const,
+      description: "20 Pfeile für den Bogen",
+      equipped: false,
+      location: "inventory" as const,
+      effects: [{ type: "passive" as const, value: "20", description: "Munition für Fernkampfwaffen" }],
+      value: 10,
+      weight: 1
+    },
+    rations: {
+      name: "Reiseproviant",
+      type: "consumable" as const,
+      subtype: "none" as const,
+      rarity: "common" as const,
+      description: "Nahrung für 3 Tage",
+      equipped: false,
+      location: "inventory" as const,
+      effects: [{ type: "passive" as const, value: "Nahrung", description: "Verhindert Hunger" }],
+      value: 5,
+      weight: 2
+    }
+  } as const;
+
   const normalizeInventory = (inv: unknown, cls: CharacterClass): InventoryItem[] => {
     const items: InventoryItem[] = Array.isArray(inv) ? inv.map((raw) => {
       const r = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>
@@ -107,9 +255,13 @@ export async function POST(req: Request) {
     if (items.length > 0) return items
 
     // Provide a minimal class-based starting kit using itemTemplates
-    const add = (key: keyof typeof itemTemplates) => {
+    const add = (key: keyof typeof itemTemplates): InventoryItem => {
       const t = itemTemplates[key]
-      return { ...t, quantity: 1 } as InventoryItem
+      return { 
+        ...t, 
+        quantity: 1,
+        effects: [...t.effects] // Make effects mutable
+      }
     }
     switch (cls) {
       case 'warrior':
@@ -316,8 +468,8 @@ Gib NUR gültiges JSON zurück, ohne weiteren Text.
             if (!bad) return provided
             return generateFantasyName(race, gender, data.scenario?.title)
           })(),
-          // Keep display class if provided; otherwise use slug
-          cls: (typeof c.cls === 'string' && c.cls.trim().length > 0) ? c.cls : clsSlug,
+          // PRIORITIZE user selections over AI - this fixes character class mismatch
+          cls: clsSlug,
           race,
           gender,
           hp: Math.min(15, Math.max(8, Number(c.hp) || 10)),

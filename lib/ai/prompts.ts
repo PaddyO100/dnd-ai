@@ -19,6 +19,7 @@ export const SCENARIO_USER = (opts: {
   players: number;
   classes: string[];
   startingWeapons?: string[];
+  conflict?: string;
 }) => `
 Erzeuge DREI unterschiedliche Szenario-Optionen als JSON im folgenden Schema.
 Alle Textfelder müssen auf DEUTSCH sein.
@@ -40,7 +41,9 @@ Regeln:
   genre=${opts.genre}, frame=${opts.frame},
   world={magic:${opts.world.magic},tech:${opts.world.tech},climate:${opts.world.climate}},
   players=${opts.players}, classes=${opts.classes.join(",")}${opts.startingWeapons ? `,
-  startingWeapons=${opts.startingWeapons.join(",")}` : ''}
+  startingWeapons=${opts.startingWeapons.join(",")}` : ''}${opts.conflict ? `,
+  HAUPTKONFLIKT="${opts.conflict}"` : ''}
+- ${opts.conflict ? `WICHTIG: Integriere den Hauptkonflikt "${opts.conflict}" als zentrales Element in alle Szenarien.` : ''}
 - Jede Option muss sich in Ton & Mechanik klar unterscheiden.
 - KEINE zusätzliche Erklärung außerhalb des JSON.
 `;

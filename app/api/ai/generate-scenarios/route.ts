@@ -11,6 +11,8 @@ const Input = z.object({
   // Classes are optional now; characters can be chosen later
   classes: z.array(z.string()).default([]),
   startingWeapons: z.array(z.string()).optional(),
+  // Conflict parameter - the main conflict input from the user
+  conflict: z.string().default(""),
   // aiModel removed; model is taken from environment
 })
 
@@ -21,12 +23,13 @@ export async function POST(req: Request) {
   // Helper: deterministic mock scenarios when credits are unavailable
   const mock = () => {
     const base = `${data.genre} • ${data.frame}`
+    const conflictText = data.conflict.trim() ? ` Der Hauptkonflikt: ${data.conflict}` : ""
     return {
       scenarios: [1, 2, 3].map((i) => ({
         id: `scn-${Date.now()}-${i}`,
         title: `${base} – Pfad ${i}`,
-        summary: `In einer Welt mit ${data.world.magic.toLowerCase()} Magie, ${data.world.tech.toLowerCase()} Technologie und ${data.world.climate.toLowerCase()}m Klima entsteht ein Konflikt: ${data.frame.toLowerCase()}e Herausforderungen verlangen den Helden alles ab.`,
-        mapIdea: `Region mit ${data.world.climate.toLowerCase()}m Klima; Hotspots: Stadt, Ruinen, geheimnisvoller Wald; Hook: ${data.frame}`,
+        summary: `In einer Welt mit ${data.world.magic.toLowerCase()} Magie, ${data.world.tech.toLowerCase()} Technologie und ${data.world.climate.toLowerCase()}m Klima entsteht ein Konflikt: ${data.frame.toLowerCase()}e Herausforderungen verlangen den Helden alles ab.${conflictText}`,
+        mapIdea: `Region mit ${data.world.climate.toLowerCase()}m Klima; Hotspots: Stadt, Ruinen, geheimnisvoller Wald; Hook: ${data.frame}${conflictText}`,
       }))
     }
   }
