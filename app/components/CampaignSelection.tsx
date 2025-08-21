@@ -158,9 +158,10 @@ export default function CampaignSelection() {
                       e.stopPropagation();
                       handleCampaignSelect(campaign);
                     }}
-                    className="flex-1 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white px-3 py-2 rounded-lg hover:from-amber-600 hover:to-orange-600 transition-colors font-medium"
+                    className="flex-1 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white px-3 py-2 rounded-lg hover:from-amber-600 hover:to-orange-600 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    disabled={selectedCampaign?.id === campaign.id}
                   >
-                    Wählen
+                    {selectedCampaign?.id === campaign.id ? 'Ausgewählt' : 'Wählen'}
                   </button>
                 </div>
 

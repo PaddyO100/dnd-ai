@@ -20,18 +20,33 @@ export async function POST(req: Request) {
   const body = await req.json()
   const data = Input.parse(body)
 
-  // Helper: deterministic mock scenarios when credits are unavailable
+  // Helper: deterministic but varied mock scenarios when credits are unavailable
   const mock = () => {
-    const base = `${data.genre} • ${data.frame}`
     const conflictText = data.conflict.trim() ? ` Der Hauptkonflikt: ${data.conflict}` : ""
-    return {
-      scenarios: [1, 2, 3].map((i) => ({
-        id: `scn-${Date.now()}-${i}`,
-        title: `${base} – Pfad ${i}`,
-        summary: `In einer Welt mit ${data.world.magic.toLowerCase()} Magie, ${data.world.tech.toLowerCase()} Technologie und ${data.world.climate.toLowerCase()}m Klima entsteht ein Konflikt: ${data.frame.toLowerCase()}e Herausforderungen verlangen den Helden alles ab.${conflictText}`,
-        mapIdea: `Region mit ${data.world.climate.toLowerCase()}m Klima; Hotspots: Stadt, Ruinen, geheimnisvoller Wald; Hook: ${data.frame}${conflictText}`,
-      }))
-    }
+    const timestamp = Date.now()
+    
+    const scenarios = [
+      {
+        id: `scn-${timestamp}-1`,
+        title: `Die verlorenen Artefakte von ${data.world.climate === 'warm' ? 'Solaria' : data.world.climate === 'kalt' ? 'Frostheim' : 'Temporia'}`,
+        summary: `In einer Welt mit ${data.world.magic.toLowerCase()} Magie und ${data.world.tech.toLowerCase()} Technologie müssen die Helden drei verstreute Artefakte finden, bevor sie in die falschen Hände geraten.${conflictText}`,
+        mapIdea: `Drei getrennte Regionen: Antike Ruinen, versteckter Tempel, und eine moderne Festung mit magischen Fallen.`,
+      },
+      {
+        id: `scn-${timestamp}-2`, 
+        title: `Die Verschwörung der Schatten`,
+        summary: `Eine politische Intrige erschüttert das Reich. Diplomatie und verdeckte Ermittlungen sind gefragt, um eine Katastrophe zu verhindern.${conflictText}`,
+        mapIdea: `Städtische Umgebung: Königspalast, Schwarzmarkt-Viertel, geheime Unterschlupf-Netzwerke und ein nobles Anwesen.`,
+      },
+      {
+        id: `scn-${timestamp}-3`,
+        title: `Expedition in die Wildnis`,
+        summary: `Ein gefährlicher Ritt durch unbekanntes Terrain. Survival-Skills und Kampfkraft sind gefragt gegen wilde Kreaturen und die Elemente.${conflictText}`,
+        mapIdea: `Weite Landschaft: Dunkler Wald, reißender Fluss, geheimnisvolle Höhlen und ein verlassenes Lager.`,
+      }
+    ]
+    
+    return { scenarios }
   }
 
   const selectedModel = OPENROUTER_MODEL;

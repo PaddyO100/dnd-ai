@@ -69,14 +69,55 @@ export const characterClasses: Record<string, CharacterClass> = {
     hpMultiplier: 1.1,
     mpMultiplier: 1.1
   },
-  cleric: {
-    name: "Kleriker",
-    description: "Diener der Götter mit heilenden und schützenden Kräften",
-    primaryStats: ["wisdom", "charisma"],
-    startingSkills: ["divine_magic", "healing", "religion"],
-    startingTraits: ["divine_favor", "turn_undead"],
-    startingItems: ["heiligensymbol", "heiltrank", "gebetsbuch"],
+  
+  bard: {
+    name: "Barde",
+    description: "Ein charismatischer Künstler, der mit Musik und Worten Magie wirkt.",
+    primaryStats: ["charisma", "dexterity"],
+    startingSkills: ["performance", "persuasion", "deception"],
+    startingTraits: ["silver_tongue", "inspiration"],
+    startingItems: ["rapier", "lederruestung", "laute"],
+    hpMultiplier: 1.0,
+    mpMultiplier: 1.2
+  },
+  paladin: {
+    name: "Paladin",
+    description: "Ein heiliger Krieger, der einem Eid geschworen hat und das Böse bekämpft.",
+    primaryStats: ["strength", "charisma"],
+    startingSkills: ["divine_magic", "melee_combat", "insight"],
+    startingTraits: ["divine_smite", "lay_on_hands"],
+    startingItems: ["langschwert", "kettenhemd", "heiligensymbol"],
+    hpMultiplier: 1.2,
+    mpMultiplier: 1.1
+  },
+  druid: {
+    name: "Druide",
+    description: "Ein Wächter der Natur, der die Macht der Wildnis und der Tiere nutzt.",
+    primaryStats: ["wisdom", "constitution"],
+    startingSkills: ["nature_lore", "animal_handling", "survival"],
+    startingTraits: ["wild_shape", "nature_magic"],
+    startingItems: ["holzschild", "keule", "kraeuterbeutel"],
     hpMultiplier: 1.1,
+    mpMultiplier: 1.2
+  },
+  monk: {
+    name: "Mönch",
+    description: "Ein disziplinierter Kampfkünstler, der seinen Körper als Waffe einsetzt.",
+    primaryStats: ["dexterity", "wisdom"],
+    startingSkills: ["acrobatics", "athletics", "insight"],
+    startingTraits: ["unarmored_defense", "flurry_of_blows"],
+    startingItems: ["kurzschwert", "wurfpfeile"],
+    hpMultiplier: 1.1,
+    mpMultiplier: 1.0
+  },
+  warlock: {
+    name: "Hexenmeister",
+    description: "Ein Magier, der seine Macht von einem mächtigen, außerweltlichen Wesen bezieht.",
+    primaryStats: ["charisma", "constitution"],
+    startingSkills: ["arcane_knowledge", "deception", "intimidation"],
+    startingTraits: ["eldritch_blast", "dark_ones_blessing"],
+    startingItems: ["dolch", "zauberfokus", "grimoire"],
+    hpMultiplier: 1.0,
     mpMultiplier: 1.3
   }
 };
@@ -174,6 +215,76 @@ export const traitDefinitions: Record<string, Trait> = {
     description: "+2 Bonus auf alle sozialen Würfe",
     type: "background",
     effects: [{ type: "skill_bonus", value: 2, target: "social" }],
+    prerequisites: []
+  },
+  silver_tongue: {
+    name: "Silberzunge",
+    description: "+2 Bonus auf Überzeugen und Täuschen.",
+    type: "class",
+    effects: [{ type: "skill_bonus", value: 2, target: "persuasion" }, { type: "skill_bonus", value: 2, target: "deception" }],
+    prerequisites: []
+  },
+  inspiration: {
+    name: "Inspiration",
+    description: "Kann Verbündeten einen Bonus auf einen Wurf geben.",
+    type: "class",
+    effects: [{ type: "special_ability", value: "inspiration", target: "ally" }],
+    prerequisites: []
+  },
+  divine_smite: {
+    name: "Göttliches Niederstrecken",
+    description: "Verbraucht einen Zauberslot, um zusätzlichen gleißenden Schaden zu verursachen.",
+    type: "class",
+    effects: [{ type: "special_ability", value: "divine_smite", target: "melee_attack" }],
+    prerequisites: []
+  },
+  lay_on_hands: {
+    name: "Handauflegen",
+    description: "Kann eine begrenzte Menge an Trefferpunkten pro Tag heilen.",
+    type: "class",
+    effects: [{ type: "special_ability", value: "lay_on_hands", target: "healing" }],
+    prerequisites: []
+  },
+  wild_shape: {
+    name: "Tiergestalt",
+    description: "Kann sich in ein Tier verwandeln.",
+    type: "class",
+    effects: [{ type: "special_ability", value: "wild_shape", target: "self" }],
+    prerequisites: []
+  },
+  nature_magic: {
+    name: "Naturmagie",
+    description: "+2 Bonus auf Naturmagie.",
+    type: "class",
+    effects: [{ type: "skill_bonus", value: 2, target: "nature_magic" }],
+    prerequisites: []
+  },
+  unarmored_defense: {
+    name: "Ungepanzerte Verteidigung",
+    description: "Rüstungsklasse basiert auf Geschicklichkeit und Weisheit, wenn keine Rüstung getragen wird.",
+    type: "class",
+    effects: [{ type: "special_ability", value: "unarmored_defense", target: "ac" }],
+    prerequisites: []
+  },
+  flurry_of_blows: {
+    name: "Schlaghagel",
+    description: "Kann nach einem Angriff einen zusätzlichen unbewaffneten Schlag ausführen.",
+    type: "class",
+    effects: [{ type: "special_ability", value: "flurry_of_blows", target: "bonus_action" }],
+    prerequisites: []
+  },
+  eldritch_blast: {
+    name: "Schauriger Strahl",
+    description: "Ein mächtiger magischer Angriff.",
+    type: "class",
+    effects: [{ type: "special_ability", value: "eldritch_blast", target: "ranged_spell_attack" }],
+    prerequisites: []
+  },
+  dark_ones_blessing: {
+    name: "Segen des Dunklen",
+    description: "Erhält temporäre Trefferpunkte, wenn ein Feind getötet wird.",
+    type: "class",
+    effects: [{ type: "special_ability", value: "dark_ones_blessing", target: "on_kill" }],
     prerequisites: []
   }
 };
@@ -697,7 +808,7 @@ export async function generateCharacter(
   const baseCharacter: Character = {
     id,
     name,
-    cls: characterClasses[className.toLowerCase()]?.name || className,
+    cls: className.toLowerCase(),
     race,
     gender,
     hp: derived.maxHp,

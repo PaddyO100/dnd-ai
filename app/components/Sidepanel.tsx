@@ -4,7 +4,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { useGameStore } from '@/lib/state/gameStore';
-import { getCurrentDirectorState, type DirectorState, type PacingType, type TensionLevel } from '@/lib/engine/director';
+import { getCurrentDirectorState } from '@/lib/engine/director';
+import type { DirectorState, PacingType, TensionLevel } from '@/lib/engine/director/types';
 import QuestsTab from './tabs/QuestsTab';
 import SpellsTab from './tabs/SpellsTab';
 import SavesTab from './tabs/SavesTab';
@@ -128,6 +129,7 @@ export default function Sidepanel() {
           playerId={player?.id}
           name={player?.name}
           cls={player?.cls}
+          race={player?.race}
           hp={player?.hp}
           maxHp={player?.maxHp}
           mp={player?.mp}
@@ -171,10 +173,13 @@ export default function Sidepanel() {
   );
 }
 
+import { getRaceDisplayName } from '@/lib/character/portraitSystem';
+
 function CharacterTab(props: {
   playerId?: string;
   name?: string;
   cls?: string;
+  race?: string;
   hp?: number;
   maxHp?: number;
   mp?: number;
@@ -215,6 +220,7 @@ function CharacterTab(props: {
         <div className="flex-1">
           <div className="font-bold text-lg text-amber-900">{name}</div>
           <div className="text-amber-700 font-medium">{cls}</div>
+          <div className="text-amber-700 font-medium">{getRaceDisplayName(props.race as any)}</div>
           <div className="text-xs text-amber-600 mb-2">
             Lvl {level || 1} • RK {armorClass || 10} • XP: {experience || 0}
           </div>

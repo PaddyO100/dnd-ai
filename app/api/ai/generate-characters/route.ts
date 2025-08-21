@@ -12,35 +12,14 @@ const Input = z.object({
   playerSelections: z.array(z.object({
     class: z.string(),
     race: z.string(),
-    gender: z.string()
+    gender: z.string(),
+    name: z.string()
   })).optional(),
   scenario: z.object({ id: z.string().optional(), title: z.string().optional() }).optional()
 })
 
 
-function pick<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)] }
-
-function generateFantasyName(race?: Race, gender?: Gender, scenarioTitle?: string): string {
-  const humanMale = ['Alaric','Benedikt','Cedric','Dietmar','Eldric','Falko','Geralt','Hagen','Isen','Jorund','Konrad','Leofric','Marek','Nestor','Ortwin','Ragvald','Serik','Tristan','Ulric','Valten']
-  const humanFemale = ['Adelheid','Brigida','Celia','Daria','Elara','Frida','Greta','Helena','Isolde','Jasmin','Klara','Livia','Mara','Neria','Odile','Runa','Serena','Thyra','Ulma','Vera']
-  const elfMale = ['Aelar','Beluar','Caelion','Daerion','Elrohir','Faelar','Gaelin','Hadriel','Ithron','Kaelith']
-  const elfFemale = ['Aelene','Belira','Caelya','Daenara','Elowen','Faelith','Gaelira','Hathiel','Ilyana','Kaelira']
-  const dwarfMale = ['Balrik','Dorim','Edrun','Falkrim','Gorim','Hadrin','Kazmuk','Norrin','Orsik','Thorin']
-  const dwarfFemale = ['Bera','Dagna','Edrika','Frida','Gerta','Helga','Ingra','Katla','Ragna','Thyra']
-  const orcMale = ['Brakk','Darg','Gor','Hark','Karg','Morg','Ruk','Thrag','Urzog','Zug']
-  const orcFemale = ['Brakka','Darga','Gora','Harka','Karga','Morga','Ruka','Thraga','Urza','Zuga']
-
-  let pool: string[] = humanMale
-  if (race === 'high_elf' || race === 'wood_elf' || race === 'dark_elf') pool = gender === 'female' ? elfFemale : elfMale
-  else if (race === 'dwarf') pool = gender === 'female' ? dwarfFemale : dwarfMale
-  else if (race === 'orc') pool = gender === 'female' ? orcFemale : orcMale
-  else pool = gender === 'female' ? humanFemale : humanMale
-
-  // optional epithet from scenario (e.g., "von Aethermoor")
-  const place = (scenarioTitle || '').split(/[\s,:\-]+/).filter(Boolean)[0]
-  const surname = place ? (Math.random() < 0.6 ? ` von ${place}` : '') : ''
-  return `${pick(pool)}${surname}`
-}
+import { generateFantasyName } from '@/lib/ai/nameGenerator';
 
 export async function POST(req: Request) {
   const data = Input.parse(await req.json())
@@ -290,13 +269,13 @@ export async function POST(req: Request) {
   // Helper: mock party when credits are unavailable
   const mockParty = () => {
     const base = (i: number) => {
-      const sel = (data.playerSelections?.[i] || {}) as {class?: string; race?: string; gender?: string};
+      const sel = (data.playerSelections?.[i] || {}) as {class?: string; race?: string; gender?: string; name?: string};
       const cls = classNameToSlug(sel.class || data.classes?.[i] || 'warrior') || 'warrior';
       const race = (sel.race || 'human') as Race;
       const gender = (sel.gender || (i % 2 === 0 ? 'male' : 'female')) as Gender;
       return {
         id: `char_${Date.now()}_${i}`,
-        name: generateFantasyName(race, gender, data.scenario?.title),
+        name: sel.name || generateFantasyName(race, gender, data.scenario?.title),
         cls,
         race,
         gender,
@@ -327,42 +306,37 @@ export async function POST(req: Request) {
 Erstelle ${data.players} ausgewogene Spielercharaktere als JSON unter dem Schlüssel "party".
 Alle Textfelder auf DEUTSCH, JSON-Keys ENGLISCH.
 
+${data.playerSelections?.map((p, i) => `Charakter ${i+1} Name: ${p.name}`).join('\n')}
+
 Erweiterte Charakterstruktur:
 {
   "id": "unique_string",
   "name": "deutscher Name",
   "cls": "Klasse aus ${ (data.playerSelections?.map(x => x.class) || data.classes || ['warrior','mage','rogue']).join(', ') }",
-  "hp": number (8-15),
-  "maxHp": number (gleich hp),
-  "mp": number (5-12),
-  "maxMp": number (gleich mp),
+  "hp": 8,
+  "maxHp": 8,
+  "mp": 8,
+  "maxMp": 8,
   "level": 1,
   "experience": 0,
   "stats": {
-    "STR": number (8-16),
-    "DEX": number (8-16), 
-    "CON": number (8-16),
-    "INT": number (8-16),
-    "WIS": number (8-16),
-    "CHA": number (8-16)
+    "STR": 10,
+    "DEX": 10, 
+    "CON": 10,
+    "INT": 10,
+    "WIS": 10,
+    "CHA": 10
   },
-  "armorClass": number (10-14),
+  "armorClass": 10,
   "skills": [
     {
       "name": "Fähigkeitsname",
-      "level": number (1-4),
+      "level": 1,
       "max": 5,
       "description": "kurze Beschreibung"
     }
   ],
-  "spells": [
-    {
-      "name": "Zauber name",
-      "cost": number (1-3),
-      "description": "Was der Zauber bewirkt",
-      "level": number (1-2)
-    }
-  ],
+  "spells": [],
   "traits": [
     {
       "name": "Eigenschaft",
@@ -370,15 +344,7 @@ Erweiterte Charakterstruktur:
       "type": "class"
     }
   ],
-  "inventory": [
-    {
-      "name": "Gegenstand",
-      "type": "weapon|armor|tool|misc",
-      "quantity": 1,
-      "description": "Beschreibung",
-      "equipped": boolean
-    }
-  ],
+  "inventory": [],
   "conditions": [],
   "backstory": {
     "origin": "Herkunft des Charakters",
@@ -387,7 +353,7 @@ Erweiterte Charakterstruktur:
     "flaw": "Eine charakteristische Schwäche",
     "background": "2-3 Sätze Hintergrundgeschichte"
   },
-  "portraitSeed": number (Zufallszahl für optionale Portraits)
+  "portraitSeed": 12345
 }
 
 Balancing-Regeln:
@@ -453,14 +419,14 @@ Gib NUR gültiges JSON zurück, ohne weiteren Text.
     if (parsed.party && Array.isArray(parsed.party)) {
       parsed.party = parsed.party.map((char: unknown, index: number) => {
         const c = (typeof char === 'object' && char !== null ? char : {}) as Record<string, unknown>;
-        const selection = (data.playerSelections?.[index] || {}) as {class?: string; race?: string; gender?: string};
+        const selection = (data.playerSelections?.[index] || {}) as {class?: string; race?: string; gender?: string; name?: string};
         const clsSlug = (classNameToSlug(String(selection?.class || c.cls)) || 'warrior') as CharacterClass
         const race: Race = (selection?.race as Race) || (c.race as Race) || ('human' as Race)
         const gender: Gender = (selection?.gender as Gender) || (c.gender as Gender) || ((index % 2 === 0 ? 'male' : 'female') as Gender)
         // Ensure all required fields exist with defaults
         const processedChar = {
           id: c.id || `char_${Date.now()}_${index}`,
-          name: (() => {
+          name: selection.name || (() => {
             const provided = String(c.name || '').trim()
             const lower = provided.toLowerCase()
             const bad = !provided || /^charakter\s*\d+$/i.test(provided) ||

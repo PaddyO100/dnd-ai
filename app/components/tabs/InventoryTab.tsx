@@ -10,7 +10,7 @@ interface InventoryTabProps {
   player?: Player;
 }
 
-type ViewMode = 'equipment' | 'inventory' | 'bag';
+type ViewMode = 'equipment' | 'inventory';
 
 export default function InventoryTab({ player }: InventoryTabProps) {
   const { updatePlayerInventory } = useGameStore();
@@ -22,7 +22,7 @@ export default function InventoryTab({ player }: InventoryTabProps) {
   // Filter items by location/type
   const equippedItems = inventory.filter(item => item.equipped || item.location === 'equipped');
   const inventoryItems = inventory.filter(item => item.location === 'inventory' && !item.equipped);
-  const bagItems = inventory.filter(item => item.location === 'bag');
+  
   
   // Equipment slots
   const equipmentSlots = {
@@ -61,23 +61,6 @@ export default function InventoryTab({ player }: InventoryTabProps) {
     updatePlayerInventory(player.id, updatedInventory);
   };
 
-  const moveItem = (item: InventoryItem, newLocation: 'inventory' | 'bag') => {
-    if (!player) return;
-    
-    const updatedInventory = inventory.map(invItem => {
-      if (invItem.name === item.name) {
-        return {
-          ...invItem,
-          location: newLocation,
-          equipped: newLocation === 'bag' ? false : invItem.equipped
-        };
-      }
-      return invItem;
-    });
-    
-    updatePlayerInventory(player.id, updatedInventory);
-  };
-
   const getItemIcon = (item: InventoryItem) => {
     switch (item.type) {
       case 'weapon':
@@ -107,17 +90,23 @@ export default function InventoryTab({ player }: InventoryTabProps) {
     }
   };
 
-  const currentItems = viewMode === 'equipment' ? equippedItems : 
-                     viewMode === 'inventory' ? inventoryItems : bagItems;
+  const currentItems = viewMode === 'equipment' ? equippedItems : inventoryItems;
+
+  const debugLog = (
+    <div className="text-xs">
+      <p>Equipped Items:</p>
+      <pre>{JSON.stringify(equippedItems, null, 2)}</pre>
+    </div>
+  );
 
   return (
     <div className="space-y-4">
+      {debugLog}
       {/* View Mode Tabs */}
       <div className="flex bg-amber-100 dark:bg-amber-900/20 rounded-lg p-1">
         {([
           { key: 'equipment', label: 'Ausrüstung', count: equippedItems.length },
-          { key: 'inventory', label: 'Inventar', count: inventoryItems.length },
-          { key: 'bag', label: 'Beutel', count: bagItems.length }
+          { key: 'inventory', label: 'Inventar', count: inventoryItems.length }
         ] as const).map(({ key, label, count }) => (
           <button
             key={key}
@@ -299,30 +288,6 @@ export default function InventoryTab({ player }: InventoryTabProps) {
                             {item.equipped ? 'Ablegen' : 'Ausrüsten'}
                           </button>
                         )}
-                        
-                        {viewMode === 'inventory' && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              moveItem(item, 'bag');
-                            }}
-                            className="text-xs px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded transition-colors"
-                          >
-                            → Beutel
-                          </button>
-                        )}
-                        
-                        {viewMode === 'bag' && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              moveItem(item, 'inventory');
-                            }}
-                            className="text-xs px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded transition-colors"
-                          >
-                            → Inventar
-                          </button>
-                        )}
                       </div>
                     </div>
                     
@@ -349,7 +314,6 @@ export default function InventoryTab({ player }: InventoryTabProps) {
               </svg>
               <p className="text-amber-600 mb-2">
                 {viewMode === 'inventory' && 'Inventar ist leer'}
-                {viewMode === 'bag' && 'Beutel ist leer'}
               </p>
               <p className="text-xs text-amber-500">
                 Neue Gegenstände werden automatisch hier erscheinen

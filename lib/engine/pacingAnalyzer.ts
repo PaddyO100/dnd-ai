@@ -1,6 +1,5 @@
-// lib/engine/pacingAnalyzer.ts
-
 import type { HistoryEntry } from '@/lib/state/gameStore'
+import { analyzeText } from '../nlp/contextAnalyzer';
 
 export type PacingType = 'exploration' | 'combat' | 'social' | 'downtime' | 'puzzle'
 export type TensionLevel = 'low' | 'building' | 'high' | 'climax' | 'resolution'
@@ -58,44 +57,6 @@ export interface TensionCurve {
 }
 
 export class PacingAnalyzer {
-  private readonly PACING_KEYWORDS = {
-    combat: [
-      'kampf', 'angriff', 'schaden', 'würfel', 'initiative', 'attacke', 
-      'verteidigung', 'zauber', 'waffe', 'treffer', 'schlag', 'tod', 'verwundet'
-    ],
-    social: [
-      'spricht', 'sagt', 'gespräch', 'überzeug', 'verhandl', 'diplomatie',
-      'charme', 'einschüchterung', 'lügen', 'wahrheit', 'freund', 'feind'
-    ],
-    exploration: [
-      'erkund', 'such', 'untersuch', 'raum', 'tür', 'gang', 'karte',
-      'weg', 'pfad', 'entdeck', 'versteckt', 'geheim', 'durchgang'
-    ],
-    puzzle: [
-      'rätsel', 'mechanismus', 'lösung', 'knobel', 'denk', 'logik',
-      'code', 'schlüssel', 'hebel', 'schalter', 'symbol', 'muster'
-    ],
-    downtime: [
-      'rast', 'pause', 'schläft', 'isst', 'trinkt', 'entspannt', 'wartet',
-      'reparier', 'handel', 'einkauf', 'vorbereitung', 'planung'
-    ]
-  }
-
-  private readonly INTENSITY_INDICATORS = {
-    high: [
-      'gefahr', 'bedrohung', 'tod', 'sterb', 'panik', 'angst', 'terror',
-      'explosion', 'feuer', 'blut', 'schrei', 'flucht', 'verzweiflung'
-    ],
-    medium: [
-      'spannung', 'mysteriös', 'unbekannt', 'verdächtig', 'seltsam',
-      'unheimlich', 'düster', 'schatten', 'geräusch', 'bewegung'
-    ],
-    low: [
-      'sicher', 'ruhig', 'friedlich', 'entspannt', 'gelöst', 'erfolgreich',
-      'licht', 'warm', 'freundlich', 'vertraut', 'normal'
-    ]
-  }
-
   analyzePacing(history: HistoryEntry[], windowSize: number = 10): PacingMetrics {
     const recentTurns = history.slice(-windowSize)
     const pacingTypes: PacingType[] = []
@@ -109,7 +70,8 @@ export class PacingAnalyzer {
 
     // Analyze each turn for pacing indicators
     recentTurns.forEach((turn) => {
-      const pacingType = this.classifyPacingType(turn.content.toLowerCase())
+      const analysis = analyzeText(turn.content);
+      const pacingType = analysis.dominantCategory;
       pacingTypes.push(pacingType)
 
       // Update counters
@@ -208,24 +170,6 @@ export class PacingAnalyzer {
     }
   }
 
-  private classifyPacingType(content: string): PacingType {
-    let maxScore = 0
-    let detectedType: PacingType = 'downtime'
-
-    Object.entries(this.PACING_KEYWORDS).forEach(([type, keywords]) => {
-      const score = keywords.reduce((sum, keyword) => {
-        return sum + (content.includes(keyword) ? 1 : 0)
-      }, 0)
-
-      if (score > maxScore) {
-        maxScore = score
-        detectedType = type as PacingType
-      }
-    })
-
-    return detectedType
-  }
-
   private calculateVarietyScore(pacingTypes: PacingType[]): number {
     const uniqueTypes = new Set(pacingTypes).size
     const maxTypes = 5 // combat, social, exploration, puzzle, downtime
@@ -236,23 +180,8 @@ export class PacingAnalyzer {
     let totalIntensity = 0
 
     turns.forEach(turn => {
-      const content = turn.content.toLowerCase()
-      let turnIntensity = 0.3 // baseline
-
-      // Check for intensity indicators
-      this.INTENSITY_INDICATORS.high.forEach(keyword => {
-        if (content.includes(keyword)) turnIntensity += 0.3
-      })
-      
-      this.INTENSITY_INDICATORS.medium.forEach(keyword => {
-        if (content.includes(keyword)) turnIntensity += 0.2
-      })
-      
-      this.INTENSITY_INDICATORS.low.forEach(keyword => {
-        if (content.includes(keyword)) turnIntensity -= 0.1
-      })
-
-      totalIntensity += Math.min(Math.max(turnIntensity, 0), 1)
+        const analysis = analyzeText(turn.content);
+        totalIntensity += analysis.sentiment;
     })
 
     return Math.min(totalIntensity / turns.length, 1)
@@ -341,25 +270,8 @@ export class PacingAnalyzer {
   }
 
   private calculateTurnTension(turn: HistoryEntry): number {
-    const content = turn.content.toLowerCase()
-    let tension = 0.3 // baseline
-
-    // High tension events
-    this.INTENSITY_INDICATORS.high.forEach(keyword => {
-      if (content.includes(keyword)) tension += 0.25
-    })
-
-    // Medium tension events
-    this.INTENSITY_INDICATORS.medium.forEach(keyword => {
-      if (content.includes(keyword)) tension += 0.15
-    })
-
-    // Low tension events
-    this.INTENSITY_INDICATORS.low.forEach(keyword => {
-      if (content.includes(keyword)) tension -= 0.1
-    })
-
-    return Math.min(Math.max(tension, 0), 1)
+    const analysis = analyzeText(turn.content);
+    return analysis.sentiment;
   }
 
   private identifyStoryBeat(turn: HistoryEntry): string | null {

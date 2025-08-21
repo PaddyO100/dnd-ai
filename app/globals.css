@@ -255,6 +255,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .card-fantasy {
   background: var(--bg-gradient-card);
+  background-image: url('https://www.transparenttextures.com/patterns/old-wall.png');
   backdrop-filter: blur(16px);
   border: 2px solid var(--primary-300);
   border-radius: var(--border-radius-xl);
@@ -524,11 +525,11 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .chat-bubble-dm {
-  @apply bg-amber-50 border-l-4 border-amber-400 rounded-r-lg p-4 my-2 shadow-sm;
+  @apply bg-gradient-to-r from-amber-50 to-amber-100 border-l-8 border-amber-400 rounded-r-lg p-4 my-2 shadow-sm;
 }
 
 .chat-bubble-player {
-  @apply bg-blue-50 border-l-4 border-blue-500 rounded-r-lg p-4 my-2 shadow-sm ml-8;
+  @apply bg-gradient-to-r from-blue-50 to-blue-100 border-l-8 border-blue-500 rounded-r-lg p-4 my-2 shadow-sm ml-8;
 }
 
 .tab-active {

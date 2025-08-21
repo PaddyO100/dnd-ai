@@ -1,9 +1,10 @@
 import { z } from 'zod'
+import { InventoryItem } from './character'
 
 const QuestProgress = z.object({ current: z.number().int().nonnegative().optional(), total: z.number().int().positive().optional(), description: z.string().optional() }).partial()
 export const Effects = z.object({
   party: z.array(z.object({ name: z.string(), hpDelta: z.number().optional(), status: z.string().optional() })).optional(),
-  inventory: z.array(z.object({ op: z.enum(['add','remove']), item: z.string() })).optional(),
+  inventory: z.array(z.object({ op: z.enum(['add','remove']), item: z.union([z.string(), InventoryItem]) })).optional(),
   quests: z.array(z.object({
     op: z.enum(['add','update','complete']),
     title: z.string(),

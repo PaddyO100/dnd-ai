@@ -6,6 +6,7 @@ import ThemeProvider from '@/components/ThemeProvider'
 import ThemeToggle from '@/components/ThemeToggle'
 import AutoSaveProvider from '@/components/AutoSaveProvider'
 import { audioManager } from '@/lib/audio/audioManager'
+import { Toaster } from 'react-hot-toast';
 
 export const metadata: Metadata = {
   title: 'D&D KI – Starter',
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="bg-primary text-primary min-h-screen">
         <ThemeProvider>
           <AutoSaveProvider>
+            <Toaster position="top-center" />
             <ThemeToggle />
             {children}
           </AutoSaveProvider>

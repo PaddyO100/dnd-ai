@@ -3,14 +3,15 @@ import { z } from 'zod';
 import { openrouter, OPENROUTER_MODEL } from '@/lib/ai/openrouter';
 import { SYSTEM_DM, NEXT_TURN_USER } from '@/lib/ai/prompts';
 import { roll } from '@/lib/engine/dice';
-import { getDirectorAdvice, ToolCall, ToolUpdateCharacter, ToolRequestDice } from '@/lib/engine/director';
+import { getDirectorAdvice } from '@/lib/engine/director';
+import { ToolCall, ToolUpdateCharacter, ToolRequestDice } from '@/lib/engine/director/types';
 import { mergeEffects } from '@/lib/engine/mergeEffects';
 import type { Player, HistoryEntry } from '@/lib/state/gameStore';
 
 
 const Input = z.object({
   history: z.array(z.object({
-    role: z.string(),            // oder z.enum(['dm','player'])
+    role: z.enum(['dm', 'player', 'system', 'user', 'assistant']),            // oder z.enum(['dm','player'])
     content: z.string(),
   })),
   state: z.any(),                // <-- WICHTIG: NICHT optional!
@@ -43,12 +44,18 @@ export async function POST(req: Request) {
     }
     const data: NextTurnInput = parsed.data;
 
-    const userMsg = NEXT_TURN_USER();
+    const userMsg = NEXT_TURN_USER(data);
+
+    const messages = data.history.map(h => ({
+      role: h.role === 'dm' ? 'assistant' : (h.role === 'player' ? 'user' : h.role),
+      content: h.content
+    }));
 
     const chat = await openrouter.chat.completions.create({
       model: OPENROUTER_MODEL,
       messages: [
         { role: 'system', content: SYSTEM_DM },
+        ...messages,
         { role: 'user', content: userMsg },
       ],
       temperature: 0.7,

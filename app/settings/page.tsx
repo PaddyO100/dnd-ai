@@ -318,6 +318,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Data Management */}
+          {/* Data Management */}
           <div className="card-fantasy p-6 space-y-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
@@ -373,6 +374,100 @@ export default function SettingsPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                 </svg>
                 Reset to Start
+              </button>
+            </div>
+          </div>
+
+          {/* Game Data Management */}
+          <div className="card-fantasy p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center">
+                <svg className="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 1.1.9 2 2 2h12a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H6a2 2 0 00-2 2z" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="fantasy-subtitle">Game Data Management</h2>
+                <p className="text-amber-700 text-sm">Export, import, or clear game data.</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <button
+                onClick={() => useGameStore.getState().exportGame()}
+                className="btn flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Export Game
+              </button>
+              <label className="btn cursor-pointer flex items-center justify-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                </svg>
+                Import Game
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={(e) => e.target.files && useGameStore.getState().importGame(e.target.files[0])}
+                  className="hidden"
+                />
+              </label>
+              <button
+                onClick={() => useGameStore.getState().clearCachedCharacterData()}
+                className="btn-warning flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H8a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Clear Cache
+              </button>
+            </div>
+          </div>
+
+          {/* Game Data Management */}
+          <div className="card-fantasy p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center">
+                <svg className="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 1.1.9 2 2 2h12a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H6a2 2 0 00-2 2z" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="fantasy-subtitle">Game Data Management</h2>
+                <p className="text-amber-700 text-sm">Export, import, or clear game data.</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <button
+                onClick={() => useGameStore.getState().exportGame()}
+                className="btn flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Export Game
+              </button>
+              <label className="btn cursor-pointer flex items-center justify-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                </svg>
+                Import Game
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={(e) => e.target.files && useGameStore.getState().importGame(e.target.files[0])}
+                  className="hidden"
+                />
+              </label>
+              <button
+                onClick={() => useGameStore.getState().clearCachedCharacterData()}
+                className="btn-warning flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H8a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Clear Cache
               </button>
             </div>
           </div>

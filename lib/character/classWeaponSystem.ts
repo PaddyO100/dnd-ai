@@ -158,7 +158,9 @@ export const CLASS_WEAPON_DATA: Record<CharacterClass, ClassWeaponInfo> = {
         'Schwere Rüstungen', 'heilige Waffen', 'gesegnete Gegenstände'
       ]
     }
-  }
+  },
+
+  
 }
 
 // Helper functions

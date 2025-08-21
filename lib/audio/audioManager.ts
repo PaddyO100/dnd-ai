@@ -1,3 +1,5 @@
+import { analyzeText } from '../nlp/contextAnalyzer';
+
 export type SceneType = 
   | 'main_menu'
   | 'menu' 
@@ -363,8 +365,21 @@ class AudioManager {
       return 'open_field';
     }
 
-    // Default to open field for general outdoor scenes
-    return 'open_field';
+    const analysis = analyzeText(content);
+    switch (analysis.dominantCategory) {
+        case 'combat':
+            return 'combat';
+        case 'social':
+            return 'city';
+        case 'exploration':
+            return 'open_field';
+        case 'puzzle':
+            return 'ruins';
+        case 'downtime':
+            return 'campfire';
+        default:
+            return 'open_field';
+    }
   }
 }
 

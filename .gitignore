@@ -68,3 +68,8 @@ claude-flow
 claude-flow.bat
 claude-flow.ps1
 hive-mind-prompt-*.txt
+
+#Gemini created stuff
+.Gemini
+Gemini.md
+.vscode/

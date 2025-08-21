@@ -21,7 +21,7 @@ export const SCENARIO_USER = (opts: {
   startingWeapons?: string[];
   conflict?: string;
 }) => `
-Erzeuge DREI unterschiedliche Szenario-Optionen als JSON im folgenden Schema.
+Erzeuge DREI völlig unterschiedliche Szenario-Optionen als JSON im folgenden Schema.
 Alle Textfelder müssen auf DEUTSCH sein.
 WICHTIG: Verwende EXAKT diese Feldnamen: "id", "title", "summary", "mapIdea"
 
@@ -44,8 +44,11 @@ Regeln:
   startingWeapons=${opts.startingWeapons.join(",")}` : ''}${opts.conflict ? `,
   HAUPTKONFLIKT="${opts.conflict}"` : ''}
 - ${opts.conflict ? `WICHTIG: Integriere den Hauptkonflikt "${opts.conflict}" als zentrales Element in alle Szenarien.` : ''}
-- Jede Option muss sich in Ton & Mechanik klar unterscheiden.
+- Jede Option muss sich in Ton, Thema UND Mechanik klar unterscheiden (z.B. Kampf vs. Diplomatie vs. Erforschung).
+- Verwende völlig verschiedene Schauplätze und Herausforderungen.
+- Unterschiedliche Stimmungen: episch, mysteriös, actionreich, düster, etc.
 - KEINE zusätzliche Erklärung außerhalb des JSON.
+- KEINE ähnlichen Titel oder wiederholenden Elemente zwischen den Szenarien.
 `;
 
 export const SYSTEM_DM = `
@@ -171,8 +174,12 @@ Regeln:
 - KEINE zusätzliche Erklärung außerhalb des JSON
 `;
 
-export const NEXT_TURN_USER = () => `
-Gegeben sind bisherige Nachrichten (history), aktueller Zustand (state) und die neue Spieler-Eingabe.
+interface NextTurnData {
+  playerInput: string;
+}
+
+export const NEXT_TURN_USER = (data: NextTurnData) => `
+Gegeben sind bisherige Nachrichten (history), aktueller Zustand (state) und die neue Spieler-Eingabe: ${data.playerInput}
 Fasse die Eingabe kurz zusammen, entscheide plausible Folgen und liefere den nächsten DM-Text.
 Alle Texte auf DEUTSCH. Gib NUR JSON zurück:
 

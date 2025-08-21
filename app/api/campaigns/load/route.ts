@@ -141,6 +141,7 @@ export async function POST(req: NextRequest) {
         {
           role: 'dm',
           content: `Welcome to "${campaign.title}"! ${startingScenario.summary}`,
+          timestamp: Date.now(),
         },
       ],
       inventory: [],

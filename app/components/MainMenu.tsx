@@ -2,65 +2,26 @@
 
 import { useState, useEffect } from 'react';
 import { useGameStore } from '@/lib/state/gameStore';
-import { saveManager } from '@/lib/saves/saveManager';
 import { audioManager } from '@/lib/audio/audioManager';
 import SaveGameManager from './SaveGameManager';
-import type { SaveMetadata } from '@/lib/saves/saveManager';
+import ClearCacheButton from './ClearCacheButton';
 
 export default function MainMenu() {
-  const { setCampaignSelectionStep, importState, reset } = useGameStore();
-  const [savedGames, setSavedGames] = useState<SaveMetadata[]>([]);
+  const { setCampaignSelectionStep, reset } = useGameStore();
   const [showSaveManager, setShowSaveManager] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   // Initialize main menu music
   useEffect(() => {
     const initMainMenuAudio = async () => {
-  await audioManager.changeScene('main_menu');
+      await audioManager.changeScene('main_menu');
     };
     initMainMenuAudio();
-  }, []);
-
-  // Load available save games
-  useEffect(() => {
-    const loadSaves = async () => {
-      try {
-        const saves = await saveManager.getAllSaves();
-        setSavedGames(saves);
-      } catch (error) {
-        console.error('Failed to load saved games:', error);
-      }
-    };
-    loadSaves();
   }, []);
 
   const handleNewGame = () => {
     audioManager.playUISound('button');
     reset();
     useGameStore.setState({ step: 'onboarding' });
-  };
-
-  const handleLoadGame = async (saveId: string) => {
-    try {
-      setLoading(true);
-      audioManager.playUISound('button');
-      
-      // Extract slot number from save ID
-      const slotMatch = saveId.match(/slot_(\d+)$/);
-      if (!slotMatch) throw new Error('Invalid save ID format');
-      
-      const slotNumber = parseInt(slotMatch[1]);
-      const savedGame = await saveManager.loadFromSlot(slotNumber);
-      
-      importState(savedGame.gameState);
-      audioManager.playUISound('notification');
-      setShowSaveManager(false); // Close save manager after loading
-    } catch (error) {
-      console.error('Failed to load game:', error);
-      audioManager.playUISound('error');
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleCampaigns = () => {
@@ -114,22 +75,16 @@ export default function MainMenu() {
               {/* Load Game */}
               <button
                 onClick={() => setShowSaveManager(true)}
-                disabled={savedGames.length === 0 || loading}
-                className="group card-fantasy p-8 text-center hover:scale-105 transform transition-all duration-200 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="group card-fantasy p-8 text-center hover:scale-105 transform transition-all duration-200 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800"
               >
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                  {loading ? (
-                    <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  )}
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
                 </div>
                 <h3 className="text-xl font-semibold text-blue-800 dark:text-blue-200 mb-2">Spiel Laden</h3>
                 <p className="text-sm text-blue-600 dark:text-blue-400">
-                  {loading ? 'Wird geladen...' : 
-                   savedGames.length > 0 ? `${savedGames.length} Spielstände verfügbar` : 'Keine Spielstände gefunden'}
+                  Lade einen gespeicherten Spielstand
                 </p>
               </button>
 
@@ -167,18 +122,40 @@ export default function MainMenu() {
 
         {/* Footer */}
         <footer className="text-center mt-16 text-gray-500 dark:text-gray-400">
-          <p className="text-sm">
+          <p className="text-sm mb-4">
             Powered by OpenRouter AI • Version 1.0.0
           </p>
+          
+          {/* System Reset Button */}
+          <div className="mt-4">
+            <ClearCacheButton className="text-sm px-4 py-2" />
+            <p className="text-xs mt-2 text-gray-400">
+              Löst Anzeige-Probleme (falsche Charaktere, leere Inventare)
+            </p>
+          </div>
         </footer>
       </div>
 
       {/* Save Game Manager Modal */}
       {showSaveManager && (
-        <SaveGameManager
-          onClose={() => setShowSaveManager(false)}
-          onLoadGame={handleLoadGame}
-        />
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Gespeicherte Spiele</h2>
+              <button
+                onClick={() => setShowSaveManager(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6">
+              <SaveGameManager />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

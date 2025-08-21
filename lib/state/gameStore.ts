@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+// import { persist } from 'zustand/middleware'; // Disabled - no auto-persistence
 import type { Character, Skill, Spell, InventoryItem, Condition } from '../../schemas/character';
-import { generateInitialQuests } from '@/lib/engine/questGenerator';
+import { gameDB } from '@/lib/database/gameDatabase';
 
 // Extend Character type for game usage
 export type Player = Character & {
@@ -16,7 +16,7 @@ export type Scenario = {
   mapIdea: string;
 };
 
-export type HistoryEntry = { role: 'dm' | 'player'; content: string };
+export type HistoryEntry = { role: 'dm' | 'player'; content: string; timestamp: number };
 export type Effects = {
   party?: Array<{ 
     name: string; 
@@ -84,6 +84,8 @@ export type Quest = {
   progress?: { current: number; total: number; description?: string }
 }
 
+
+
 export type GameState = {
   step: 'mainMenu' | 'onboarding' | 'campaignSelection' | 'inGame';
   selections: {
@@ -99,7 +101,7 @@ export type GameState = {
   };
   party: Player[];
   history: HistoryEntry[];
-  inventory: string[];
+  inventory: InventoryItem[];
   quests: Quest[];
   rngSeed?: number;
   map?: { seed?: number; imageUrl?: string };
@@ -114,7 +116,7 @@ export type GameState = {
 
   setSelections: (p: Partial<GameState['selections']>) => void;
   startGame: (scenario: Scenario, party: Player[]) => void;
-  pushHistory: (entry: HistoryEntry) => void;
+  pushHistory: (entry: Omit<HistoryEntry, 'timestamp'>) => void;
   applyEffects: (effects: Effects) => void;
   updatePlayerConditions: (playerId: string, conditions: Condition[]) => void;
   updatePlayerSkill: (playerId: string, skillName: string, newLevel: number) => void;
@@ -127,6 +129,7 @@ export type GameState = {
   updateSettings: (newSettings: Partial<AppSettings>) => void;
   reset: () => void;
   resetToStartPage: () => void;
+  clearCachedCharacterData: () => void; // Fix for Liora → Lena character cache issue
   importState: (data: Partial<GameState>) => void;
   setMapImage: (url: string) => void;
   setPlayerPortrait: (id: string, url: string) => void;
@@ -135,6 +138,11 @@ export type GameState = {
   setMainMenuStep: () => void;
   triggerAutoSave: () => void;
   updateAutoSaveSettings: (enabled: boolean, interval: number) => void;
+  // Database functions
+  saveGameManual: (saveName: string) => Promise<number>;
+  loadGameFromSave: (saveId: number) => Promise<void>;
+  exportGame: () => void;
+  importGame: (file: File) => Promise<void>;
   // Quest reducers
   markQuestComplete: (title: string) => void;
   updateQuestProgress: (title: string, progress: Partial<NonNullable<Quest['progress']>>) => void;
@@ -156,8 +164,8 @@ const defaultSettings: AppSettings = {
 };
 
 export const useGameStore = create<GameState>()(
-  persist(
-    (set, get) => ({
+  // No persist - always start fresh in main menu
+  (set, get) => ({
       step: 'mainMenu',
       selections: { classes: [], startingWeapons: [] },
       party: [],
@@ -170,61 +178,42 @@ export const useGameStore = create<GameState>()(
         set((s) => ({ selections: { ...s.selections, ...p } })),
 
       startGame: (scenario, party) =>
-        set(() => {
-          // seed assignment
-          const seededParty = party.map((p) => ({
-            ...p,
-            portraitSeed: p.portraitSeed ?? Math.floor(Math.random() * 1e9),
-            // Ensure any missing inventory arrays are present
-            inventory: Array.isArray(p.inventory) ? p.inventory : []
-          })).map((p) => {
-            // Auto-equip starter items more comprehensively
-            const inv = [...(p.inventory || [])];
-            const hasEquipped = inv.some(i => i.equipped || i.location === 'equipped');
-            if (!hasEquipped && inv.length > 0) {
-              // Try to equip multiple starter items
-              inv.forEach((item, idx) => {
-                if (item.type === 'weapon' || (item.type === 'armor' && item.subtype === 'chest')) {
-                  inv[idx] = { ...inv[idx], equipped: true, location: 'equipped' } as InventoryItem;
-                } else if (!item.location || item.location === 'inventory') {
-                  // Ensure other items are properly categorized
-                  inv[idx] = { ...inv[idx], location: 'inventory' } as InventoryItem;
-                }
-              });
-            } else {
-              // Ensure all items have proper locations
-              inv.forEach((item, idx) => {
-                if (!item.location) {
-                  inv[idx] = { ...inv[idx], location: item.equipped ? 'equipped' : 'inventory' } as InventoryItem;
-                }
-              });
-            }
-            return { ...p, inventory: inv };
-          });
-          // Generate a small quest set based on scenario and party
-          const initialQuests = generateInitialQuests(scenario, seededParty.map(sp => ({ id: sp.id, name: sp.name, cls: sp.cls }))).map(q => ({
-            title: q.title,
-            status: q.status,
-            note: q.note,
-            category: q.category,
-            priority: q.priority,
-            progress: q.progress
-          }));
-          return {
-            step: 'inGame',
-            selections: { ...get().selections, scenario },
-            party: seededParty,
-            history: [],
-            inventory: [],
-            quests: initialQuests,
-            rngSeed: Math.floor(Math.random() * 1e9),
-            map: { seed: Math.floor(Math.random() * 1e9) },
-            selectedPlayerId: seededParty[0]?.id,
-          };
-        }),
+        set((s) => ({
+          step: 'inGame',
+          selections: { ...s.selections, scenario },
+          party: party.map(p => ({ ...p, inventory: Array.isArray(p.inventory) ? p.inventory : [] })),
+          history: [],
+          inventory: [],
+          quests: [],
+          rngSeed: Math.floor(Math.random() * 1e9),
+          map: { seed: Math.floor(Math.random() * 1e9) },
+          selectedPlayerId: party[0]?.id,
+        })),
 
-      pushHistory: (entry) =>
-        set((s) => ({ history: [...s.history, entry] })),
+            pushHistory: (entry) =>
+        set((s) => ({ history: [...s.history, { ...entry, timestamp: Date.now() }] })),
+
+      exportGame: () => {
+        const state = get();
+        const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `aethel-save-${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+
+      importGame: async (file: File) => {
+        try {
+          const text = await file.text();
+          const json = JSON.parse(text);
+          get().importState(json);
+        } catch (error) {
+          console.error('Error importing game:', error);
+          // You might want to add a user-facing error message here
+        }
+      },
 
       applyEffects: (effects) => {
         const s = get();
@@ -280,15 +269,22 @@ export const useGameStore = create<GameState>()(
         }
 
         // Inventory
-        let inventory = [...s.inventory];
+        const inventory = [...s.inventory];
         for (const it of effects?.inventory || []) {
           if (it.op === 'add') {
-            const itemName = typeof it.item === 'string' ? it.item : it.item.name;
-            inventory.push(itemName);
+            if (typeof it.item === 'string') {
+              // This case should be avoided, but we can handle it by creating a minimal item
+              inventory.push({ name: it.item, type: 'misc', subtype: 'none', rarity: 'common', quantity: 1, equipped: false, location: 'inventory', effects: [], value: 0, weight: 0 });
+            } else {
+              inventory.push(it.item);
+            }
           }
           if (it.op === 'remove') {
             const itemName = typeof it.item === 'string' ? it.item : it.item.name;
-            inventory = inventory.filter((x) => x !== itemName);
+            const itemIndex = inventory.findIndex((x) => x.name === itemName);
+            if (itemIndex > -1) {
+              inventory.splice(itemIndex, 1);
+            }
           }
         }
 
@@ -551,26 +547,55 @@ export const useGameStore = create<GameState>()(
           }
         }));
       },
-    }),
-    {
-      name: 'dnd-ai-save',
-      version: 2,
-      migrate: (persistedState: unknown) => {
-        const s: Partial<GameState> = (persistedState as Partial<GameState>) || {};
-        // If app was left in onboarding or step is missing, start at main menu on next boot
-        if (!s.step || s.step === 'onboarding') {
-          s.step = 'mainMenu';
+
+      // NEW: Manual Save/Load functions using Dexie database
+      saveGameManual: async (saveName: string) => {
+        const state = get();
+        try {
+          const saveId = await gameDB.saveGame(saveName, state, false);
+          console.log(`✅ Spiel gespeichert als: ${saveName}`);
+          return saveId;
+        } catch (error) {
+          console.error('❌ Fehler beim Speichern:', error);
+          throw error;
         }
-        // Ensure arrays are initialized
-        if (!s.selections) s.selections = { classes: [], startingWeapons: [] } as GameState['selections'];
-        if (!Array.isArray(s.selections.classes)) s.selections.classes = [];
-        if (!Array.isArray(s.selections.startingWeapons)) s.selections.startingWeapons = [];
-        s.party = Array.isArray(s.party) ? s.party : [];
-        s.history = Array.isArray(s.history) ? s.history : [];
-        s.inventory = Array.isArray(s.inventory) ? s.inventory : [];
-        s.quests = Array.isArray(s.quests) ? s.quests : [];
-        return s as GameState;
       },
-    }
-  )
+
+      loadGameFromSave: async (saveId: number) => {
+        try {
+          const saveGame = await gameDB.loadGame(saveId);
+          if (!saveGame) throw new Error('Spielstand nicht gefunden');
+          
+          // Load the game state and go to game view
+          set({ 
+            ...saveGame.gameState,
+            step: 'inGame' as const,
+            selectedPlayerId: saveGame.gameState.selectedPlayerId || undefined
+          });
+          
+          console.log(`✅ Spielstand geladen: ${saveGame.name}`);
+        } catch (error) {
+          console.error('❌ Fehler beim Laden:', error);
+          throw error;
+        }
+      },
+
+      clearCachedCharacterData: () => {
+        // Reset to main menu and clear game data
+        set({
+          step: 'mainMenu' as const,
+          party: [],
+          history: [],
+          inventory: [],
+          quests: [],
+          selectedPlayerId: undefined,
+          // Keep user preferences
+          selections: { classes: [], startingWeapons: [] },
+        });
+        
+        // Also clear database cache
+        gameDB.clearAllCache();
+        console.log('🧹 Cache geleert - zurück zum Hauptmenü');
+      },
+    })
 );

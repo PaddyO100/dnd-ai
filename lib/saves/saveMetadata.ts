@@ -97,9 +97,9 @@ export class SaveMetadataManager {
         itemCount: gameState.inventory.length,
         items: gameState.inventory.slice(0, 10), // Store first 10 items for preview
         hasValuables: gameState.inventory.some(item => 
-          item.toLowerCase().includes('gold') || 
-          item.toLowerCase().includes('gem') || 
-          item.toLowerCase().includes('treasure')
+          item.name.toLowerCase().includes('gold') || 
+          item.name.toLowerCase().includes('gem') || 
+          item.name.toLowerCase().includes('treasure')
         )
       };
     }

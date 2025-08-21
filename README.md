@@ -21,7 +21,7 @@ Aethel's Forge combines comfortable onboarding, balanced character generation, d
 
 ### 🎲 **Complete RPG Experience**
 - **Full Character Creation**: 8-step wizard with race abilities, class restrictions, and portrait selection
-- **Enhanced Race System**: 10 races with unique stat bonuses and special abilities
+- **Enhanced Race System**: 6 races with unique stat bonuses and special abilities
 - **Class Weapon Restrictions**: Realistic weapon proficiency system with visual indicators
 - **Dynamic Inventory**: Auto-equip starter equipment with categorized trait display
 - **Visual Dice System**: Beautiful 3D dice roller overlay with physics
@@ -90,7 +90,7 @@ Navigate to `http://localhost:3000` and start your adventure!
 - Pick your preferred theme and setting
 
 ### 2. **Character Creation**
-- **Race Selection**: Choose from 10 enhanced races with unique abilities
+- **Race Selection**: Choose from 6 enhanced races with unique abilities
 - **Class Selection**: Pick your class with realistic weapon restrictions
 - **Portrait Selection**: AI-generated character portraits with race-specific traits
 - **Auto-Generation**: Complete character stats, inventory, and backstory
@@ -251,12 +251,13 @@ const directorAdvice = getEnhancedDirectorAdvice({
 ## 🎯 Game Features Deep Dive
 
 ### **Enhanced Race System**
-- **10 Unique Races**: Human, Elf, Dwarf, Halfling, Gnome, Half-Elf, Half-Orc, Tiefling, Dragonborn, Genasi
+- **6 Unique Races**: Dark Elf, Dwarf, High-Elf, Wood-Elf, Human, Orc
 - **Stat Bonuses**: Race-specific attribute modifications
 - **Special Abilities**: Unique traits like Darkvision, Lucky, Rage, etc.
 - **Visual Integration**: Race info displayed during character creation
 
 ### **Class Weapon Restrictions** 
+- **9 Unique Classes**: Bard, Druid, Mage, Monk, Paladin, Ranger, Rogue, Warlock, Warrior
 - **Realistic Proficiencies**: Classes limited to appropriate weapon types
 - **Visual Indicators**: Color-coded compatibility (Green/Yellow/Red)
 - **Efficiency Display**: Damage effectiveness percentages

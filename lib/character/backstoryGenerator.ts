@@ -209,54 +209,7 @@ export const backstoryPrompts: Record<string, BackstoryPrompts> = {
     ]
   },
 
-  cleric: {
-    originPrompts: [
-      "Ein ehemaliger Tempelpriester, der den Tempel verließ um Gutes in der Welt zu tun",
-      "Ein Bekehrter, der nach einem göttlichen Zeichen sein Leben änderte",
-      "Ein Waisenkind, das in einem Tempel aufgezogen wurde",
-      "Ein ehemaliger Krieger, der nach einer Nahtoderfahrung zur Religion fand",
-      "Ein Wanderprediger, der Gottes Wort in entlegene Gebiete bringt"
-    ],
-    personalityPrompts: [
-      "Gütig und mitfühlend, aber unnachgiebig bei moralischen Fragen",
-      "Missionarisch und überzeugend, möchte andere bekehren",
-      "Demütig und selbstlos, stellt andere immer vor sich selbst",
-      "Weise und besonnen, sucht in allem nach göttlicher Führung",
-      "Streng und diszipliniert, lebt nach strengen moralischen Regeln"
-    ],
-    motivationPrompts: [
-      "Will das Wort ihres Gottes in die Welt tragen und Seelen retten",
-      "Sucht nach göttlichen Zeichen und Wundern",
-      "Möchte Leiden lindern und Kranke heilen", 
-      "Ist auf einer Pilgerreise zu heiligen Orten",
-      "Strebt danach, ein Heiliger oder göttlicher Champion zu werden"
-    ],
-    flawPrompts: [
-      "Ist intolerant gegenüber anderen Religionen und Glaubensrichtungen",
-      "Neigt zum Fanatismus und rechtfertigt alles mit göttlichem Willen",
-      "Ist zu vertrauensselig und wird oft von Betrügern ausgenutzt",
-      "Zweifelt manchmal an ihrem Glauben und ihren göttlichen Gaben",
-      "Wird depressiv wenn sie anderen nicht helfen kann"
-    ],
-    bondPrompts: [
-      "Mein heiliges Symbol wurde mir von meinem Mentor gegeben",
-      "Ich muss eine wichtige religiöse Aufgabe erfüllen",
-      "Mein Tempel wird von Ungläubigen bedroht",
-      "Ein göttliches Zeichen führte mich auf diesen Weg"
-    ],
-    idealPrompts: [
-      "Glaube: Mein Gott zeigt mir den richtigen Weg",
-      "Hoffnung: Es gibt immer einen Weg zum Licht",
-      "Nächstenliebe: Allen Leidenden muss geholfen werden",
-      "Gerechtigkeit: Böse Taten müssen bestraft werden"
-    ],
-    fearPrompts: [
-      "Den Glauben und die göttlichen Kräfte zu verlieren",
-      "Von ihrem Gott für unwürdig befunden zu werden",
-      "Dass sie jemandem nicht helfen kann der ihre Hilfe braucht",
-      "Von Dämonene oder unheiligen Kreaturen korrumpiert zu werden"
-    ]
-  }
+  
 };
 
 /**

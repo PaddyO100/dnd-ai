@@ -1,14 +1,15 @@
 "use client";
 
 import React, { useMemo, useState, useEffect } from "react";
+import dynamic from 'next/dynamic';
 import Image from "next/image";
 import { useGameStore, type Scenario, type Player, type Effects, type QuestCategory, type QuestPriority, type QuestStatus } from "@/lib/state/gameStore";
 import { getAllRaces, getAllGenders, getRaceDisplayName, getGenderDisplayName, getPortraitUrl, getAllCharacterClasses, getClassDisplayName } from "@/lib/character/portraitSystem";
 import { getRaceInfo, getRacialTraits } from "@/lib/character/raceSystem";
 import { audioManager } from "@/lib/audio/audioManager";
 import type { Race, Gender, CharacterClass } from "@/schemas/character";
-import ClassInfoModal from "./modals/ClassInfoModal";
-import RaceInfoModal from "./modals/RaceInfoModal";
+const ClassInfoModal = dynamic(() => import("./modals/ClassInfoModal"));
+const RaceInfoModal = dynamic(() => import("./modals/RaceInfoModal"));
 
 type WorldPrefs = { magic: string; tech: string; climate: string };
 
@@ -54,9 +55,11 @@ export default function OnboardingWizard() {
 	const [selectedRace, setSelectedRace] = useState<Race | null>(null);
 	const [selectedGender, setSelectedGender] = useState<Gender | null>(null);
 	const [selectedClass, setSelectedClass] = useState<CharacterClass | null>(null);
+	const [characterName, setCharacterName] = useState<string>('');
+	const [generatedName, setGeneratedName] = useState<string>('');
 		// Multi-character selection state
 		const [currentPlayerIndex, setCurrentPlayerIndex] = useState<number>(0);
-		const [playerChoices, setPlayerChoices] = useState<Array<{class: CharacterClass; race: Race; gender: Gender}>>([]);
+		const [playerChoices, setPlayerChoices] = useState<Array<{class: CharacterClass; race: Race; gender: Gender; name: string}>>([]);
 
 	// Modal State
 	const [showClassModal, setShowClassModal] = useState<boolean>(false);
@@ -94,14 +97,15 @@ export default function OnboardingWizard() {
 		if (step === 6) return Boolean(selectedClass);
 		if (step === 7) return Boolean(selectedRace);
 		if (step === 8) return Boolean(selectedGender);
+		if (step === 9) return characterName.trim().length > 2;
 		return true;
-	}, [step, localGenre, localFrame, world, conflict, players, selectedScenario, selectedClass, selectedRace, selectedGender]);
+	}, [step, localGenre, localFrame, world, conflict, players, selectedScenario, selectedClass, selectedRace, selectedGender, characterName]);
 
 	const advance = () => {
 		if (!canContinue) return;
 		audioManager.playUISound('button');
 		setError(null);
-		setStep((s) => Math.min(8, s + 1));
+		setStep((s) => Math.min(9, s + 1));
 	};
 	const back = () => {
 		audioManager.playUISound('button');
@@ -519,6 +523,33 @@ export default function OnboardingWizard() {
 					</section>
 				)}
 
+				{step === 9 && (
+					<section className="space-y-4">
+						<h2 className="text-xl font-semibold">Name des Charakters</h2>
+						<p className="text-sm opacity-80">Gib deinem Charakter einen Namen – Spieler {currentPlayerIndex + 1} von {players}:</p>
+						<input
+							type="text"
+							value={characterName}
+							onChange={(e) => setCharacterName(e.target.value)}
+							placeholder="Charaktername"
+							className="w-full rounded-lg border border-black/10 dark:border-white/10 bg-white/90 dark:bg-black/40 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+						/>
+            <button onClick={async () => {
+              const res = await fetch('/api/ai/generate-name', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  race: selectedRace,
+                  gender: selectedGender,
+                  scenarioTitle: selectedScenario?.title,
+                }),
+              });
+              const data = await res.json();
+              setCharacterName(data.name);
+            }}>Generate Name</button>
+					</section>
+				)}
+
 								<FooterNav
 					step={step}
 					canContinue={canContinue}
@@ -531,11 +562,12 @@ export default function OnboardingWizard() {
 												if (step === 5) return advance(); // Move to character creation
 												if (step === 6) return advance(); // Move to race selection
 												if (step === 7) return advance(); // Move to gender selection
-												if (step === 8) {
+												if (step === 8) return advance(); // Move to name selection
+												if (step === 9) {
 													// Save current player's selections
-													if (selectedClass && selectedRace && selectedGender) {
-														const next: Array<{class: CharacterClass; race: Race; gender: Gender}> = [...playerChoices];
-														next[currentPlayerIndex] = { class: selectedClass, race: selectedRace, gender: selectedGender };
+													if (selectedClass && selectedRace && selectedGender && characterName) {
+														const next: Array<{class: CharacterClass; race: Race; gender: Gender; name: string}> = [...playerChoices];
+														next[currentPlayerIndex] = { class: selectedClass, race: selectedRace, gender: selectedGender, name: characterName };
 														setPlayerChoices(next);
 													}
 													// Next player or finish
@@ -544,6 +576,7 @@ export default function OnboardingWizard() {
 														setSelectedClass(null);
 														setSelectedRace(null);
 														setSelectedGender(null);
+														setCharacterName('');
 														setStep(6);
 														return;
 													}
@@ -591,6 +624,7 @@ function StepIndicator({ step }: { step: number }) {
 		{ n: 6, t: "Klasse" },
 		{ n: 7, t: "Rasse" },
 		{ n: 8, t: "Charakter" },
+		{ n: 9, t: "Name" },
 	];
 	return (
 		<div className="mb-6 w-full">
@@ -622,9 +656,9 @@ function StepIndicator({ step }: { step: number }) {
 			</div>
 			
 			{/* Desktop: Full indicator with proper spacing */}
-			<ol className="hidden sm:flex items-center justify-center gap-3 lg:gap-4">
-				{items.map((it) => (
-					<li key={it.n} className="flex items-center gap-2 lg:gap-3">
+			<ol className="hidden sm:flex items-center justify-center gap-2 lg:gap-3">
+				{items.map((it, i) => (
+					<li key={i} className="flex items-center gap-2 lg:gap-3">
 						<span
 							className={
 								"size-8 lg:size-9 rounded-full text-xs lg:text-sm font-medium grid place-items-center transition-colors " +
@@ -642,7 +676,7 @@ function StepIndicator({ step }: { step: number }) {
 							{it.t}
 						</span>
 						{it.n < items.length && (
-							<div className="w-8 lg:w-12 h-px bg-gray-300 dark:bg-gray-600 transition-colors" />
+							<div className="w-6 lg:w-10 h-px bg-gray-300 dark:bg-gray-600 transition-colors" />
 						)}
 					</li>
 				))}
@@ -746,25 +780,14 @@ function FooterNav({
 					</button>
 				)}
 
-				{(step === 5 || step === 6 || step === 7) && (
+				{(step >= 5 && step <= 9) && (
 					<button
 						type="button"
 						onClick={onContinue}
 						disabled={!canContinue || isBusy}
 						className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
 					>
-						{step === 5 ? "Charakter erstellen" : "Weiter"}
-					</button>
-				)}
-
-				{step === 8 && (
-					<button
-						type="button"
-						onClick={onContinue}
-						disabled={!canContinue || isBusy}
-						className="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
-					>
-						{isBusy ? "Erstelle…" : "Weiter"}
+						{step === 5 ? "Charakter erstellen" : step === 9 ? (isBusy ? "Erstelle…" : "Fertig") : "Weiter"}
 					</button>
 				)}
 			</div>

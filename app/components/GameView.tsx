@@ -3,9 +3,7 @@
 import Image from 'next/image';
 
 import { useState, useEffect } from 'react';
-import { useGameStore } from '@/lib/state/gameStore';
-import type { Player, GameState } from '@/lib/state/gameStore';
-import { saveManager } from '@/lib/saves/saveManager';
+import { useGameStore, type GameState, type Player } from '@/lib/state/gameStore';
 import Sidepanel from './Sidepanel';
 import VisualDice from './VisualDice';
 import DiceResultsDisplay from './DiceResultsDisplay';
@@ -14,6 +12,7 @@ import { AudioControls } from './AudioControls';
 import { useTutorialStore } from '@/lib/tutorial/tutorialState';
 import { getEnhancedDirectorAdvice } from '@/lib/engine/director';
 import { audioManager } from '@/lib/audio/audioManager';
+import toast from 'react-hot-toast';
 
 type HistoryItem = GameState['history'][number];
 
@@ -26,12 +25,16 @@ interface DiceResult {
 }
 
 export default function GameView() {
-  const { selections, party, history, pushHistory, applyEffects } = useGameStore();
+  const selections = useGameStore(state => state.selections);
+  const party = useGameStore(state => state.party);
+  const history = useGameStore(state => state.history);
+  const pushHistory = useGameStore(state => state.pushHistory);
+  const applyEffects = useGameStore(state => state.applyEffects);
   const { triggerEvent } = useTutorialStore();
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [showVisualDice, setShowVisualDice] = useState(false);
+  const [isSidepanelOpen, setSidepanelOpen] = useState(true);
   const [lastDiceResults, setLastDiceResults] = useState<DiceResult[]>([]);
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [saveName, setSaveName] = useState('');
@@ -65,7 +68,6 @@ export default function GameView() {
   async function submit(messageOverride?: string) {
     const msg = (messageOverride ?? input).trim();
     if (!msg) return;
-    setError(null);
 
     // Play UI sound feedback
     audioManager.playUISound('button');
@@ -153,72 +155,25 @@ export default function GameView() {
       if (!messageOverride) setInput('');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unbekannter Fehler beim nächsten Zug.';
-      setError(message);
+      toast.error(message);
     } finally {
       setBusy(false);
     }
   }
 
-  function exportGame() {
-    const blob = new Blob([JSON.stringify(useGameStore.getState(), null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'aethel-save.json'; a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  async function importGame(file: File) {
-    try {
-      const text = await file.text();
-      const json = JSON.parse(text);
-      useGameStore.getState().importState(json);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Fehler beim Import';
-      setError(message);
-    }
-  }
-
-  // Manual save function using the saveManager
-  async function handleManualSave() {
-    try {
-      setSaveModalOpen(true);
-      const gameState = useGameStore.getState();
-      const scenarioTitle = gameState.selections?.scenario?.title || 'Campaign';
-      const defaultName = `${scenarioTitle} - ${new Date().toLocaleDateString('de-DE')}`;
-      setSaveName(defaultName);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Fehler beim Öffnen des Speicher-Dialogs';
-      setError(message);
-    }
-  }
+  
 
   async function confirmSave() {
     try {
-      const gameState = useGameStore.getState();
+      const saveId = await useGameStore.getState().saveGameManual(saveName || `Save ${Date.now()}`);
       
-      // Find next available slot (starting from 2 since 1 is for auto-save)
-      let slotNumber = 2;
-      while (slotNumber <= 10) { // Max 10 save slots
-        try {
-          await saveManager.loadFromSlot(slotNumber);
-          slotNumber++; // Slot is occupied, try next
-        } catch {
-          break; // Slot is free
-        }
-      }
-
-      if (slotNumber > 10) {
-        setError('Alle Speicherplätze sind belegt. Bitte lösche einen alten Spielstand.');
-        return;
-      }
-
-      await saveManager.saveToSlot(gameState, slotNumber, saveName || `Save ${slotNumber}`);
       audioManager.playUISound('notification');
       setSaveModalOpen(false);
       setSaveName('');
+      console.log('Game saved to database with ID:', saveId);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Fehler beim Speichern';
-      setError(message);
+      toast.error(message);
       audioManager.playUISound('error');
     }
   }
@@ -243,6 +198,7 @@ export default function GameView() {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              
               <button
                 onClick={() => window.location.href = '/settings'}
                 className="btn-secondary flex items-center gap-2 text-sm px-3 py-2"
@@ -278,7 +234,7 @@ export default function GameView() {
               <h2 className="font-semibold text-gray-900 dark:text-white">Deine Abenteurer-Gruppe</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {party.map((character: Player, index) => (
+              {party.map((character: Player, index: number) => (
                 <div key={character.id || index} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   {/* Character Portrait */}
                   <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0">
@@ -346,11 +302,31 @@ export default function GameView() {
                   <p className="text-sm leading-relaxed">{h.content}</p>
                 </div>
               ))}
+              {busy && (
+                <div className="chat-bubble-dm animate-pulse">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-semibold px-2 py-1 rounded bg-amber-200 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+                      Aethel (DM)
+                    </span>
+                  </div>
+                  <p className="text-sm leading-relaxed">...</p>
+                </div>
+              )}
             </div>
           </section>
 
+          {/* Side Panel Toggle Button (for small screens) */}
+          <div className="lg:hidden text-center mb-4">
+            <button 
+              onClick={() => setSidepanelOpen(!isSidepanelOpen)}
+              className="btn-secondary"
+            >
+              {isSidepanelOpen ? 'Sidepanel ausblenden' : 'Sidepanel anzeigen'}
+            </button>
+          </div>
+
           {/* Side Panel */}
-            <Sidepanel />
+          {isSidepanelOpen && <Sidepanel />}
         </div>
 
         {/* Dice Results Display - On-Demand */}
@@ -359,12 +335,7 @@ export default function GameView() {
           onShowVisualDice={() => setShowVisualDice(true)}
         />
 
-        {/* Error Display */}
-        {error && (
-          <div className="card bg-red-50 border-red-200 p-4">
-            <p className="text-sm text-red-700">{error}</p>
-          </div>
-        )}
+        
 
         {/* Input Area */}
         <div className="card-fantasy p-6">
@@ -397,37 +368,7 @@ export default function GameView() {
         </div>
 
   {/* Action Buttons */}
-  <div className="flex flex-wrap gap-3 items-center">
-          <button onClick={handleManualSave} className="btn flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12" />
-            </svg>
-            Spiel Speichern
-          </button>
-          
-          <button onClick={exportGame} className="btn-secondary flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Exportieren
-          </button>
-          
-          <label className="btn-secondary cursor-pointer flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-            </svg>
-            Spiel Importieren
-            <input type="file" accept="application/json" className="hidden" onChange={(e) => e.target.files && importGame(e.target.files[0])} />
-          </label>
-          
-          {/* 3D Dice button - only show when there are recent dice results or always available for manual rolling */}
-          <button onClick={() => setShowVisualDice(true)} className="btn-secondary flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-            </svg>
-            {lastDiceResults.length > 0 ? 'Würfel Wiederholen' : 'Würfel Simulator'}
-          </button>
-        </div>
+  
       </div>
       <VisualDice isOpen={showVisualDice} onClose={() => setShowVisualDice(false)} />
       <TutorialOverlay />
