@@ -2,14 +2,12 @@ import React, { useMemo } from 'react';
 import { useGameStore } from '@/lib/state/gameStore';
 
 // Import locale files
-import enCommon from '@/locales/en/common.json';
 import deCommon from '@/locales/de/common.json';
 
 type TranslationKey = string;
 type NestedTranslations = { [key: string]: string | NestedTranslations };
 
 const translations = {
-  en: { common: enCommon },
   de: { common: deCommon },
 } as const;
 
@@ -37,9 +35,9 @@ function getNestedValue(obj: NestedTranslations, path: string): string {
 /**
  * Custom hook for translations based on game store language setting
  */
-export function useTranslation(namespace: keyof typeof translations.en = 'common') {
+export function useTranslation(namespace: keyof typeof translations.de = 'common') {
   const { settings } = useGameStore();
-  const currentLanguage = settings.language.toLowerCase() as 'en' | 'de';
+  const currentLanguage = 'de';
   
   const t = useMemo(() => {
     return (key: TranslationKey, fallback?: string): string => {
@@ -54,8 +52,8 @@ export function useTranslation(namespace: keyof typeof translations.en = 'common
   }, [currentLanguage, namespace]);
   
   const language = currentLanguage;
-  const isEnglish = language === 'en';
-  const isGerman = language === 'de';
+  const isEnglish = false;
+  const isGerman = true;
   
   return {
     t,

@@ -1,6 +1,6 @@
 // lib/character/characterGenerator.ts
 
-import { Character, Skill, Trait, InventoryItem, Race, Gender } from '@/schemas/character';
+import { Character, Skill, Trait, InventoryItem, Race, Gender, Spell } from '@/schemas/character';
 import { skillDefinitions, SkillName } from './skillSystem';
 import { generateStartingGear } from './itemGenerator';
 import { generateAIBackstory } from './backstoryGenerator';
@@ -24,6 +24,7 @@ export interface CharacterClass {
   startingSkills: SkillName[];
   startingTraits: string[];
   startingItems: string[];
+  startingSpells?: string[];
   hpMultiplier: number;
   mpMultiplier: number;
 }
@@ -35,7 +36,7 @@ export const characterClasses: Record<string, CharacterClass> = {
     primaryStats: ["strength", "constitution"],
     startingSkills: ["melee_combat", "athletics", "intimidation"],
     startingTraits: ["combat_training", "weapon_expertise"],
-    startingItems: ["langschwert", "lederschiene", "heiltrank"],
+    startingItems: ["langschwert", "schild", "kettenhemd", "heiltrank"],
     hpMultiplier: 1.3,
     mpMultiplier: 0.8
   },
@@ -45,7 +46,8 @@ export const characterClasses: Record<string, CharacterClass> = {
     primaryStats: ["intelligence", "wisdom"],
     startingSkills: ["arcane_knowledge", "spell_focus", "investigation"],
     startingTraits: ["arcane_sight", "spell_knowledge"],
-    startingItems: ["zauberstab", "zauberkomponenten", "manatrank"],
+    startingItems: ["zauberstab", "robe", "zauberbuch", "manatrank"],
+    startingSpells: ["feuerball", "magisches_geschoss", "schild"],
     hpMultiplier: 0.8,
     mpMultiplier: 1.5
   },
@@ -55,7 +57,7 @@ export const characterClasses: Record<string, CharacterClass> = {
     primaryStats: ["dexterity", "intelligence"],
     startingSkills: ["stealth", "lockpicking", "sleight_of_hand"],
     startingTraits: ["sneak_attack", "nimble"],
-    startingItems: ["dolch", "dietriche", "seil"],
+    startingItems: ["kurzschwert", "dolch", "lederruestung", "dietriche"],
     hpMultiplier: 1.0,
     mpMultiplier: 1.0
   },
@@ -65,7 +67,7 @@ export const characterClasses: Record<string, CharacterClass> = {
     primaryStats: ["dexterity", "wisdom"],
     startingSkills: ["survival", "nature_lore", "ranged_combat"],
     startingTraits: ["nature_bond", "tracking"],
-    startingItems: ["bogen", "pfeile", "rations"],
+    startingItems: ["langbogen", "pfeile", "lederruestung", "heiltrank"],
     hpMultiplier: 1.1,
     mpMultiplier: 1.1
   },
@@ -76,7 +78,7 @@ export const characterClasses: Record<string, CharacterClass> = {
     primaryStats: ["charisma", "dexterity"],
     startingSkills: ["performance", "persuasion", "deception"],
     startingTraits: ["silver_tongue", "inspiration"],
-    startingItems: ["rapier", "lederruestung", "laute"],
+    startingItems: ["rapier", "lederruestung", "laute", "manatrank"],
     hpMultiplier: 1.0,
     mpMultiplier: 1.2
   },
@@ -86,7 +88,8 @@ export const characterClasses: Record<string, CharacterClass> = {
     primaryStats: ["strength", "charisma"],
     startingSkills: ["divine_magic", "melee_combat", "insight"],
     startingTraits: ["divine_smite", "lay_on_hands"],
-    startingItems: ["langschwert", "kettenhemd", "heiligensymbol"],
+    startingItems: ["streitkolben", "schild", "plattenpanzer", "heiligensymbol"],
+    startingSpells: ["heilung", "schutz_vor_boesem"],
     hpMultiplier: 1.2,
     mpMultiplier: 1.1
   },
@@ -96,7 +99,8 @@ export const characterClasses: Record<string, CharacterClass> = {
     primaryStats: ["wisdom", "constitution"],
     startingSkills: ["nature_lore", "animal_handling", "survival"],
     startingTraits: ["wild_shape", "nature_magic"],
-    startingItems: ["holzschild", "keule", "kraeuterbeutel"],
+    startingItems: ["holzschild", "keule", "kraeuterbeutel", "heiltrank"],
+    startingSpells: ["dornenpeitsche", "heilen"],
     hpMultiplier: 1.1,
     mpMultiplier: 1.2
   },
@@ -106,7 +110,7 @@ export const characterClasses: Record<string, CharacterClass> = {
     primaryStats: ["dexterity", "wisdom"],
     startingSkills: ["acrobatics", "athletics", "insight"],
     startingTraits: ["unarmored_defense", "flurry_of_blows"],
-    startingItems: ["kurzschwert", "wurfpfeile"],
+    startingItems: ["kurzschwert", "wurfpfeile", "heiltrank"],
     hpMultiplier: 1.1,
     mpMultiplier: 1.0
   },
@@ -116,7 +120,8 @@ export const characterClasses: Record<string, CharacterClass> = {
     primaryStats: ["charisma", "constitution"],
     startingSkills: ["arcane_knowledge", "deception", "intimidation"],
     startingTraits: ["eldritch_blast", "dark_ones_blessing"],
-    startingItems: ["dolch", "zauberfokus", "grimoire"],
+    startingItems: ["dolch", "zauberfokus", "grimoire", "manatrank"],
+    startingSpells: ["schauriger_strahl", "hexenpfeil"],
     hpMultiplier: 1.0,
     mpMultiplier: 1.3
   }
@@ -740,10 +745,63 @@ export function generateWeaponRestrictionTraits(className: string): Trait[] {
 }
 
 /**
- * Generiert Startausrüstung basierend auf Klasse
+ * Generiert Startausrüstung basierend auf Klasse und Schwierigkeitsgrad
  */
-export function generateStartingInventory(className: string): InventoryItem[] {
-  return generateStartingGear(className);
+export function generateStartingInventory(
+  className: string,
+  difficulty: 'beginner' | 'intermediate' | 'advanced' = 'intermediate'
+): InventoryItem[] {
+  const classData = characterClasses[className.toLowerCase()];
+  if (!classData) return [];
+
+  let startingItems = [...classData.startingItems];
+
+  // Passe die Ausrüstung basierend auf dem Schwierigkeitsgrad an
+  if (difficulty === 'beginner') {
+    // Füge einen zusätzlichen Heiltrank für Anfänger hinzu
+    if (itemTemplates['heiltrank']) {
+      startingItems.push('heiltrank');
+    }
+  } else if (difficulty === 'advanced') {
+    // Entferne einen Heiltrank für Fortgeschrittene, falls vorhanden
+    const potionIndex = startingItems.indexOf('heiltrank');
+    if (potionIndex > -1) {
+      startingItems.splice(potionIndex, 1);
+    }
+  }
+
+  return startingItems.map((itemKey, index) => {
+    const template = itemTemplates[itemKey];
+    if (!template) {
+      console.warn(`Item template not found: ${itemKey}`);
+      return null;
+    }
+
+    const item: InventoryItem = {
+      name: template.name,
+      type: template.type,
+      subtype: template.subtype || 'none',
+      location: 'inventory',
+      rarity: template.rarity,
+      quantity: 1,
+      description: template.description,
+      equipped: false,
+      effects: template.effects || [],
+      value: template.value,
+      weight: template.weight,
+    };
+
+    // Auto-equip primary weapons and armor
+    if (template.type === 'weapon' && index === 0) {
+      item.equipped = true;
+      item.location = 'equipped';
+    } else if (template.type === 'armor') {
+      item.equipped = true;
+      item.location = 'equipped';
+    }
+
+    return item;
+  }).filter(Boolean) as InventoryItem[];
 }
 
 /**
@@ -765,6 +823,8 @@ export function calculateDerivedStats(stats: StatDistribution, className: string
   };
 }
 
+import { PredefinedCampaign } from '@/lib/state/gameStore';
+
 /**
  * Generiert einen vollständigen Charakter
  */
@@ -778,6 +838,7 @@ export async function generateCharacter(
     generateBackstory?: boolean;
     customStats?: StatDistribution;
     customOptions?: Partial<Character>;
+    campaign?: PredefinedCampaign;
   } = {}
 ): Promise<Character> {
   const {
@@ -786,7 +847,8 @@ export async function generateCharacter(
     statMethod = 'point_buy',
     generateBackstory = true,
     customStats,
-    customOptions = {}
+    customOptions = {},
+    campaign = undefined
   } = options;
   
   const id = `char_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -799,7 +861,7 @@ export async function generateCharacter(
   const traits = generateTraits(className);
   const racialTraits = getRacialTraits(race);
   const weaponRestrictionTraits = generateWeaponRestrictionTraits(className);
-  const inventory = generateStartingInventory(className);
+  const inventory = generateStartingInventory(className, campaign?.difficulty);
   const derived = calculateDerivedStats(modifiedStats, className);
   
   // Generate physical attributes

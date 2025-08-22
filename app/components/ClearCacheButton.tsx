@@ -2,7 +2,6 @@
 'use client';
 
 import { useGameStore } from '@/lib/state/gameStore';
-import { gameDB } from '@/lib/database/gameDatabase';
 
 interface ClearCacheButtonProps {
   className?: string;
@@ -26,9 +25,6 @@ export default function ClearCacheButton({ className = '' }: ClearCacheButtonPro
     if (!confirmed) return;
 
     try {
-      // Clear IndexedDB cache
-      await gameDB.clearAllCache();
-      
       // Reset game store to initial state
       gameStore.reset();
       
@@ -56,7 +52,7 @@ export default function ClearCacheButton({ className = '' }: ClearCacheButtonPro
 
   return (
     <button
-      onClick={handleClearCache}
+      onClick={handleClearClearCache}
       className={`btn-warning flex items-center gap-2 ${className}`}
       title="Löst Anzeige-Probleme und startet immer frisch im Hauptmenü"
     >

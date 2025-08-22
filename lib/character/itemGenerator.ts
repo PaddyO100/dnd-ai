@@ -478,45 +478,7 @@ function getItemsByRarity(rarity: InventoryItem['rarity']): ItemTemplate[] {
   return Object.values(itemDatabase).filter(item => item.rarity === rarity);
 }
 
-/**
- * Generiert Startausrüstung für eine Klasse
- */
-export function generateStartingGear(className: string): InventoryItem[] {
-  const startingGear: Record<string, string[]> = {
-    warrior: ['langschwert', 'lederruestung', 'heiltrank', 'seil'],
-    mage: ['dolch', 'manatrank', 'manatrank', 'antiker_schluessel'],
-    rogue: ['kurzschwert', 'dolch', 'dietriche', 'seil', 'heiltrank'],
-    ranger: ['kurzbogen', 'dolch', 'lederruestung', 'seil'],
-    cleric: ['kriegshammer', 'schuppenpanzer', 'heiltrank', 'heiltrank']
-  };
-  
-  const gearList = startingGear[className.toLowerCase()] || startingGear.warrior;
-  
-  const items = gearList.map((itemKey, index) => {
-    const template = itemDatabase[itemKey];
-    if (!template) {
-      console.warn(`Item template not found: ${itemKey}`);
-      return null;
-    }
-    
-    const item = createItemFromTemplate(template);
-    
-    // Auto-equip primary weapons and armor
-    if (template.type === 'weapon' && index === 0) {
-      // First weapon gets equipped
-      item.equipped = true;
-      item.location = 'equipped';
-    } else if (template.type === 'armor') {
-      // Armor gets equipped
-      item.equipped = true;
-      item.location = 'equipped';
-    }
-    
-    return item;
-  }).filter(Boolean) as InventoryItem[];
-  
-  return items;
-}
+
 
 /**
  * Berechnet Gesamtwert des Inventars

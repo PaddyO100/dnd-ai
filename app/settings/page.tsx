@@ -149,11 +149,11 @@ export default function SettingsPage() {
                 <label className="text-sm font-medium text-amber-700">{t('settings.language.label')}</label>
                 <select
                   value={settings.language}
-                  onChange={(e) => handleSettingChange('language', e.target.value as 'DE' | 'EN')}
+                  onChange={(e) => handleSettingChange('language', e.target.value as 'DE')}
                   className="select"
+                  disabled
                 >
                   <option value="DE">{t('settings.language.german')}</option>
-                  <option value="EN">{t('settings.language.english')}</option>
                 </select>
                 <p className="text-xs text-amber-600">{t('settings.language.description')}</p>
               </div>
@@ -373,7 +373,7 @@ export default function SettingsPage() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                 </svg>
-                Reset to Start
+                Zur Startseite zurücksetzen
               </button>
             </div>
           </div>
@@ -387,8 +387,8 @@ export default function SettingsPage() {
                 </svg>
               </div>
               <div>
-                <h2 className="fantasy-subtitle">Game Data Management</h2>
-                <p className="text-amber-700 text-sm">Export, import, or clear game data.</p>
+                <h2 className="fantasy-subtitle">Spieldatenverwaltung</h2>
+                <p className="text-amber-700 text-sm">Spieldaten exportieren, importieren oder löschen.</p>
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -399,13 +399,13 @@ export default function SettingsPage() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                Export Game
+                Spiel exportieren
               </button>
               <label className="btn cursor-pointer flex items-center justify-center gap-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
                 </svg>
-                Import Game
+                Spiel importieren
                 <input
                   type="file"
                   accept=".json"
@@ -420,7 +420,7 @@ export default function SettingsPage() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H8a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
-                Clear Cache
+                Cache leeren
               </button>
             </div>
           </div>
@@ -434,8 +434,8 @@ export default function SettingsPage() {
                 </svg>
               </div>
               <div>
-                <h2 className="fantasy-subtitle">Game Data Management</h2>
-                <p className="text-amber-700 text-sm">Export, import, or clear game data.</p>
+                <h2 className="fantasy-subtitle">Spieldatenverwaltung</h2>
+                <p className="text-amber-700 text-sm">Spieldaten exportieren, importieren oder löschen.</p>
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -446,13 +446,13 @@ export default function SettingsPage() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                Export Game
+                Spiel exportieren
               </button>
               <label className="btn cursor-pointer flex items-center justify-center gap-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
                 </svg>
-                Import Game
+                Spiel importieren
                 <input
                   type="file"
                   accept=".json"
@@ -467,7 +467,7 @@ export default function SettingsPage() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H8a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
-                Clear Cache
+                Cache leeren
               </button>
             </div>
           </div>
@@ -503,22 +503,22 @@ export default function SettingsPage() {
         {showStartPageResetConfirm && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-xl p-6 max-w-md w-full">
-              <h3 className="text-xl font-bold text-amber-900 mb-4">Reset to Start Page</h3>
+              <h3 className="text-xl font-bold text-amber-900 mb-4">Zur Startseite zurücksetzen</h3>
               <p className="text-amber-700 mb-6">
-                This will completely reset the application, clear all saved data, and take you back to the beginning. All game progress will be lost.
+                Dadurch wird die Anwendung vollständig zurückgesetzt, alle gespeicherten Daten werden gelöscht und Sie gelangen zurück zum Anfang. Alle Spielfortschritte gehen verloren.
               </p>
               <div className="flex gap-4">
                 <button
                   onClick={() => setShowStartPageResetConfirm(false)}
                   className="flex-1 btn-secondary"
                 >
-                  Cancel
+                  Abbrechen
                 </button>
                 <button
                   onClick={resetToStartPageHandler}
                   className="flex-1 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
                 >
-                  Reset to Start
+                  Zurücksetzen
                 </button>
               </div>
             </div>

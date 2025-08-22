@@ -12,6 +12,7 @@ import {
 import { skillDefinitions, SkillName } from '@/lib/character/skillSystem';
 import { getRaceDisplayName, getGenderDisplayName } from '@/lib/character/portraitSystem';
 import { getClassWeaponInfo } from '@/lib/character/classWeaponSystem';
+import { useGameStore } from '@/lib/state/gameStore';
 import PortraitSelector from './PortraitSelector';
 
 interface CharacterCreatorProps {
@@ -61,6 +62,9 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
     }
   };
 
+  const { selections } = useGameStore();
+  const campaign = selections.campaign;
+
   const handleCreateCharacter = async () => {
     setLoading(true);
     setError(null);
@@ -75,7 +79,8 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
         gender: selectedGender,
         statMethod,
         generateBackstory,
-        customStats: statMethod === 'point_buy' ? stats : undefined
+        customStats: statMethod === 'point_buy' ? stats : undefined,
+        campaign: campaign
       });
 
       // Add selected skills
@@ -445,10 +450,10 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
           </div>
 
           {/* Progress */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center">
             {steps.map((stepData, index) => (
-              <div key={index} className="flex items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
+              <div key={index} className={`flex items-center ${index < steps.length - 1 ? 'flex-grow' : ''}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 ${
                   index <= step 
                     ? 'bg-amber-500 text-white' 
                     : 'bg-gray-200 text-gray-600'
@@ -456,7 +461,7 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
                   {index + 1}
                 </div>
                 {index < steps.length - 1 && (
-                  <div className={`w-12 h-1 mx-2 rounded ${
+                  <div className={`h-1 mx-2 rounded flex-grow ${
                     index < step ? 'bg-amber-500' : 'bg-gray-200'
                   }`} />
                 )}

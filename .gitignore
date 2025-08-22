@@ -73,3 +73,8 @@ hive-mind-prompt-*.txt
 .Gemini
 Gemini.md
 .vscode/
+
+
+#Ignore vscode AI rules
+.github\instructions\codacy.instructions.md
+docs/

@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 // import { persist } from 'zustand/middleware'; // Disabled - no auto-persistence
 import type { Character, Skill, Spell, InventoryItem, Condition } from '../../schemas/character';
-import { gameDB } from '@/lib/database/gameDatabase';
 
 // Extend Character type for game usage
 export type Player = Character & {
@@ -139,7 +138,7 @@ export type GameState = {
   triggerAutoSave: () => void;
   updateAutoSaveSettings: (enabled: boolean, interval: number) => void;
   // Database functions
-  saveGameManual: (saveName: string) => Promise<number>;
+  saveGameManual: (saveName: string) => Promise<void>;
   loadGameFromSave: (saveId: number) => Promise<void>;
   exportGame: () => void;
   importGame: (file: File) => Promise<void>;
@@ -548,36 +547,27 @@ export const useGameStore = create<GameState>()(
         }));
       },
 
-      // NEW: Manual Save/Load functions using Dexie database
+      // NEW: Manual Save/Load functions using localStorage
       saveGameManual: async (saveName: string) => {
         const state = get();
-        try {
-          const saveId = await gameDB.saveGame(saveName, state, false);
-          console.log(`✅ Spiel gespeichert als: ${saveName}`);
-          return saveId;
-        } catch (error) {
-          console.error('❌ Fehler beim Speichern:', error);
-          throw error;
-        }
+        const saves = JSON.parse(localStorage.getItem('dnd-ai-saves') || '[]');
+        const newSave = { id: Date.now(), name: saveName, updatedAt: new Date().toISOString(), gameState: state };
+        localStorage.setItem('dnd-ai-saves', JSON.stringify([...saves, newSave]));
+        console.log(`✅ Spiel gespeichert als: ${saveName}`);
       },
 
       loadGameFromSave: async (saveId: number) => {
-        try {
-          const saveGame = await gameDB.loadGame(saveId);
-          if (!saveGame) throw new Error('Spielstand nicht gefunden');
-          
-          // Load the game state and go to game view
-          set({ 
-            ...saveGame.gameState,
-            step: 'inGame' as const,
-            selectedPlayerId: saveGame.gameState.selectedPlayerId || undefined
-          });
-          
-          console.log(`✅ Spielstand geladen: ${saveGame.name}`);
-        } catch (error) {
-          console.error('❌ Fehler beim Laden:', error);
-          throw error;
-        }
+        const saves = JSON.parse(localStorage.getItem('dnd-ai-saves') || '[]');
+        const saveGame = saves.find((s: any) => s.id === saveId);
+        if (!saveGame) throw new Error('Spielstand nicht gefunden');
+        
+        set({ 
+          ...saveGame.gameState,
+          step: 'inGame' as const,
+          selectedPlayerId: saveGame.gameState.selectedPlayerId || undefined
+        });
+        
+        console.log(`✅ Spielstand geladen: ${saveGame.name}`);
       },
 
       clearCachedCharacterData: () => {
@@ -593,8 +583,6 @@ export const useGameStore = create<GameState>()(
           selections: { classes: [], startingWeapons: [] },
         });
         
-        // Also clear database cache
-        gameDB.clearAllCache();
         console.log('🧹 Cache geleert - zurück zum Hauptmenü');
       },
     })
