@@ -1,8 +1,7 @@
 // lib/character/characterGenerator.ts
 
-import { Character, Skill, Trait, InventoryItem, Race, Gender, Spell } from '@/schemas/character';
+import { Character, Skill, Trait, InventoryItem, Race, Gender } from '@/schemas/character';
 import { skillDefinitions, SkillName } from './skillSystem';
-import { generateStartingGear } from './itemGenerator';
 import { generateAIBackstory } from './backstoryGenerator';
 import { applyRacialBonuses, getRacialTraits } from './raceSystem';
 import { getClassWeaponInfo } from './classWeaponSystem';
@@ -754,7 +753,7 @@ export function generateStartingInventory(
   const classData = characterClasses[className.toLowerCase()];
   if (!classData) return [];
 
-  let startingItems = [...classData.startingItems];
+  const startingItems = [...classData.startingItems];
 
   // Passe die Ausrüstung basierend auf dem Schwierigkeitsgrad an
   if (difficulty === 'beginner') {

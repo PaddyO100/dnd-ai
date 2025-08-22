@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useMemo, useState, useEffect } from "react";
-import dynamic from 'next/dynamic';
 import { useGameStore, type Scenario, type Player } from "@/lib/state/gameStore";
 import { audioManager } from "@/lib/audio/audioManager";
 import CharacterCreator from './CharacterCreator';
@@ -21,10 +20,8 @@ export default function OnboardingWizard() {
   const [conflict, setConflict] = useState<string>(selections.conflict || "");
   const [players, setPlayers] = useState<number>(selections.players || 1);
   const [scenarios, setScenarios] = useState<Scenario[] | null>(null);
-  const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(selections.scenario || null);
+  const [selectedScenario, setSelectedScenario] = useState<Scenario | undefined>(selections.scenario || undefined);
   const [loading, setLoading] = useState<boolean>(false);
-  const [progress, setProgress] = useState<number>(0);
-  const [error, setError] = useState<string | null>(null);
   const [party, setParty] = useState<Player[]>([]);
 
   useEffect(() => {
@@ -49,7 +46,6 @@ export default function OnboardingWizard() {
   const advance = () => {
     if (!canContinue) return;
     audioManager.playUISound('button');
-    setError(null);
     setStep((s) => Math.min(6, s + 1));
   };
 
@@ -72,8 +68,6 @@ export default function OnboardingWizard() {
   async function generateScenarios() {
     try {
       setLoading(true);
-      setProgress(10);
-      setError(null);
       saveSelections();
 
       const res = await fetch("/api/ai/generate-scenarios", {
@@ -81,25 +75,21 @@ export default function OnboardingWizard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ genre: localGenre, frame: localFrame, world, conflict, players }),
       });
-      setProgress(55);
       if (!res.ok) {
         const txt = await res.text();
         throw new Error(`Fehler beim Generieren der Szenarien: ${txt}`);
       }
       const data = await res.json();
-      setProgress(85);
       const list: Scenario[] = Array.isArray(data.scenarios) ? data.scenarios : [];
       if (!list.length) throw new Error("Keine Szenarien erhalten.");
       setScenarios(list);
       setSelectedScenario(list[0]);
-      setProgress(100);
       setStep(5);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Unbekannter Fehler bei der Szenario-Erzeugung";
-      setError(msg);
+      console.error(msg);
     } finally {
       setLoading(false);
-      setTimeout(() => setProgress(0), 800);
     }
   }
 

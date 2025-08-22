@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useGameStore, GameState } from '@/lib/state/gameStore';
 
 // Define a simplified SaveGame structure for localStorage
@@ -27,16 +27,16 @@ export default function SaveGameManager() {
     localStorage.setItem('dnd-ai-saves', JSON.stringify(saves));
   };
 
-  useEffect(() => {
-    loadSaves();
-  }, []);
-
-  const loadSaves = () => {
+  const loadSaves = useCallback(() => {
     setLoading(true);
     const allSaves = getSavesFromLocalStorage();
     setSaves(allSaves.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()));
     setLoading(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    loadSaves();
+  }, [loadSaves]);
 
   const handleSave = () => {
     if (!saveName.trim()) return;

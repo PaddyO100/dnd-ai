@@ -83,6 +83,13 @@ export type Quest = {
   progress?: { current: number; total: number; description?: string }
 }
 
+export type SaveGame = {
+  id: number;
+  name: string;
+  updatedAt: string;
+  gameState: GameState;
+};
+
 
 
 export type GameState = {
@@ -550,15 +557,15 @@ export const useGameStore = create<GameState>()(
       // NEW: Manual Save/Load functions using localStorage
       saveGameManual: async (saveName: string) => {
         const state = get();
-        const saves = JSON.parse(localStorage.getItem('dnd-ai-saves') || '[]');
+        const saves: SaveGame[] = JSON.parse(localStorage.getItem('dnd-ai-saves') || '[]');
         const newSave = { id: Date.now(), name: saveName, updatedAt: new Date().toISOString(), gameState: state };
         localStorage.setItem('dnd-ai-saves', JSON.stringify([...saves, newSave]));
         console.log(`✅ Spiel gespeichert als: ${saveName}`);
       },
 
       loadGameFromSave: async (saveId: number) => {
-        const saves = JSON.parse(localStorage.getItem('dnd-ai-saves') || '[]');
-        const saveGame = saves.find((s: any) => s.id === saveId);
+        const saves: SaveGame[] = JSON.parse(localStorage.getItem('dnd-ai-saves') || '[]');
+        const saveGame = saves.find((s) => s.id === saveId);
         if (!saveGame) throw new Error('Spielstand nicht gefunden');
         
         set({ 

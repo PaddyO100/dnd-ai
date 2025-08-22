@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { useGameStore } from '@/lib/state/gameStore';
 
 // Import locale files
 import deCommon from '@/locales/de/common.json';
@@ -36,7 +35,6 @@ function getNestedValue(obj: NestedTranslations, path: string): string {
  * Custom hook for translations based on game store language setting
  */
 export function useTranslation(namespace: keyof typeof translations.de = 'common') {
-  const { settings } = useGameStore();
   const currentLanguage = 'de';
   
   const t = useMemo(() => {

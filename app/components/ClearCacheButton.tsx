@@ -52,7 +52,7 @@ export default function ClearCacheButton({ className = '' }: ClearCacheButtonPro
 
   return (
     <button
-      onClick={handleClearClearCache}
+      onClick={handleClearCache}
       className={`btn-warning flex items-center gap-2 ${className}`}
       title="Löst Anzeige-Probleme und startet immer frisch im Hauptmenü"
     >
