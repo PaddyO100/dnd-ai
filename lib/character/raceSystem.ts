@@ -31,6 +31,7 @@ export const RACE_DATA: Record<Race, RaceInfo> = {
       {
         name: 'Vielseitigkeit',
         description: 'Menschen erhalten +1 auf alle Grundattribute und einen zusätzlichen Skill-Punkt pro Level.',
+        shortDescription: '+1 auf alle Attribute, +1 Skill-Punkt/Level',
         type: 'racial',
         prerequisites: [],
         effects: [
@@ -49,6 +50,7 @@ export const RACE_DATA: Record<Race, RaceInfo> = {
       {
         name: 'Anpassungsfähig',
         description: 'Menschen können alle Waffentypen verwenden ohne Beschränkungen.',
+        shortDescription: 'Keine Waffenbeschränkungen',
         type: 'racial',
         prerequisites: [],
         effects: [
@@ -62,6 +64,7 @@ export const RACE_DATA: Record<Race, RaceInfo> = {
       {
         name: 'Determination',
         description: '+2 auf Rettungswürfe gegen Furcht.',
+        shortDescription: '+2 auf Furcht-Rettungswürfe',
         type: 'racial',
         prerequisites: [],
         effects: [
@@ -92,6 +95,7 @@ export const RACE_DATA: Record<Race, RaceInfo> = {
       {
         name: 'Orcische Stärke',
         description: 'Orcs erhalten +2 Stärke, +1 Konstitution, aber -1 Intelligenz.',
+        shortDescription: '+2 STR, +1 CON, -1 INT',
         type: 'racial',
         prerequisites: [],
         effects: [
@@ -115,6 +119,7 @@ export const RACE_DATA: Record<Race, RaceInfo> = {
       {
         name: 'Rohe Kraft',
         description: '+25% Nahkampfschaden durch überlegene körperliche Stärke.',
+        shortDescription: '+25% Nahkampfschaden',
         type: 'racial',
         prerequisites: [],
         effects: [
@@ -128,6 +133,7 @@ export const RACE_DATA: Record<Race, RaceInfo> = {
       {
         name: 'Zähigkeit',
         description: '+2 HP pro Level durch orcische Widerstandsfähigkeit.',
+        shortDescription: '+2 HP/Level',
         type: 'racial',
         prerequisites: [],
         effects: [
@@ -141,6 +147,7 @@ export const RACE_DATA: Record<Race, RaceInfo> = {
       {
         name: 'Berserker-Wut',
         description: 'Einmal pro Tag Wut aktivieren (+3 STR, -1 AC für 10 Runden).',
+        shortDescription: '1x/Tag: +3 STR, -1 AC (10 Runden)',
         type: 'racial',
         prerequisites: [],
         effects: [
@@ -172,6 +179,7 @@ export const RACE_DATA: Record<Race, RaceInfo> = {
       {
         name: 'Dunkelelfen-Erbe',
         description: 'Dunkelelfen erhalten +2 Geschicklichkeit, +1 Intelligenz, aber -1 Konstitution.',
+        shortDescription: '+2 DEX, +1 INT, -1 CON',
         type: 'racial',
         prerequisites: [],
         effects: [
@@ -195,6 +203,7 @@ export const RACE_DATA: Record<Race, RaceInfo> = {
       {
         name: 'Dunkelsicht',
         description: 'Kann in völliger Dunkelheit bis zu 60 Fuß sehen.',
+        shortDescription: 'Sicht in Dunkelheit (60 Fuß)',
         type: 'racial',
         prerequisites: [],
         effects: [
@@ -208,6 +217,7 @@ export const RACE_DATA: Record<Race, RaceInfo> = {
       {
         name: 'Schattenmagie',
         description: 'Bonus auf dunkle Zauber und Schattenzauber.',
+        shortDescription: 'Bonus auf Schattenmagie',
         type: 'racial',
         prerequisites: [],
         effects: [
@@ -221,6 +231,7 @@ export const RACE_DATA: Record<Race, RaceInfo> = {
       {
         name: 'Giftresistenz',
         description: '+4 Bonus auf Rettungswürfe gegen Gifte.',
+        shortDescription: '+4 auf Gift-Rettungswürfe',
         type: 'racial',
         prerequisites: [],
         effects: [
@@ -251,6 +262,7 @@ export const RACE_DATA: Record<Race, RaceInfo> = {
       {
         name: 'Hochelfen-Intellekt',
         description: 'Hochelfen erhalten +2 Intelligenz, +1 Geschicklichkeit, aber -1 Konstitution.',
+        shortDescription: '+2 INT, +1 DEX, -1 CON',
         type: 'racial',
         prerequisites: [],
         effects: [
@@ -274,6 +286,7 @@ export const RACE_DATA: Record<Race, RaceInfo> = {
       {
         name: 'Magische Begabung',
         description: '+1 Zauberslot pro Level durch angeborene Magie.',
+        shortDescription: '+1 Zauberslot/Level',
         type: 'racial',
         prerequisites: [],
         effects: [
@@ -287,6 +300,7 @@ export const RACE_DATA: Record<Race, RaceInfo> = {
       {
         name: 'Elfen-Präzision',
         description: 'Kritische Treffer bei 19-20 statt nur 20.',
+        shortDescription: 'Kritischer Treffer bei 19-20',
         type: 'racial',
         prerequisites: [],
         effects: [
@@ -300,6 +314,7 @@ export const RACE_DATA: Record<Race, RaceInfo> = {
       {
         name: 'Meditation',
         description: 'Braucht nur 4 Stunden Ruhe statt 8 für vollständige Erholung.',
+        shortDescription: 'Benötigt nur 4h Schlaf',
         type: 'racial',
         prerequisites: [],
         effects: [
@@ -330,6 +345,7 @@ export const RACE_DATA: Record<Race, RaceInfo> = {
       {
         name: 'Waldelf-Agilität',
         description: 'Waldelfen erhalten +2 Geschicklichkeit, +1 Weisheit, aber -1 Konstitution.',
+        shortDescription: '+2 DEX, +1 WIS, -1 CON',
         type: 'racial',
         prerequisites: [],
         effects: [
@@ -353,6 +369,7 @@ export const RACE_DATA: Record<Race, RaceInfo> = {
       {
         name: 'Naturverbundenheit',
         description: '+3 auf alle Natur-, Survival- und Animal Handling-Würfe.',
+        shortDescription: '+3 auf Natur, Survival, Animal Handling',
         type: 'racial',
         prerequisites: [],
         effects: [
@@ -376,6 +393,7 @@ export const RACE_DATA: Record<Race, RaceInfo> = {
       {
         name: 'Meister-Bogenschütze',
         description: '+2 Angriff und +50% Schaden mit Bögen.',
+        shortDescription: '+2 Angriff, +50% Schaden mit Bögen',
         type: 'racial',
         prerequisites: [],
         effects: [
@@ -394,6 +412,7 @@ export const RACE_DATA: Record<Race, RaceInfo> = {
       {
         name: 'Tiersprache',
         description: 'Kann 1x pro Tag mit Tieren sprechen.',
+        shortDescription: '1x/Tag mit Tieren sprechen',
         type: 'racial',
         prerequisites: [],
         effects: [
@@ -425,6 +444,7 @@ export const RACE_DATA: Record<Race, RaceInfo> = {
       {
         name: 'Zwergische Zähigkeit',
         description: 'Zwerge erhalten +2 Konstitution, +1 Stärke, aber -1 Geschicklichkeit.',
+        shortDescription: '+2 CON, +1 STR, -1 DEX',
         type: 'racial',
         prerequisites: [],
         effects: [
@@ -448,6 +468,7 @@ export const RACE_DATA: Record<Race, RaceInfo> = {
       {
         name: 'Steinhaut',
         description: '-1 Schaden von allen physischen Angriffen durch natürliche Resistenz.',
+        shortDescription: '-1 Schaden von physischen Angriffen',
         type: 'racial',
         prerequisites: [],
         effects: [
@@ -461,6 +482,7 @@ export const RACE_DATA: Record<Race, RaceInfo> = {
       {
         name: 'Giftresistenz',
         description: '+4 auf Rettungswürfe gegen Gift und halbiert Giftschaden.',
+        shortDescription: '+4 auf Gift-Rettungswürfe, halber Giftschaden',
         type: 'racial',
         prerequisites: [],
         effects: [
@@ -479,6 +501,7 @@ export const RACE_DATA: Record<Race, RaceInfo> = {
       {
         name: 'Handwerkskunst',
         description: '+3 auf alle Handwerkswürfe und doppelte Proficiency mit Werkzeugen.',
+        shortDescription: '+3 auf Handwerk, doppelte Werkzeug-Proficiency',
         type: 'racial',
         prerequisites: [],
         effects: [

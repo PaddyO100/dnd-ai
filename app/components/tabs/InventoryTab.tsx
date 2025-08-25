@@ -92,16 +92,10 @@ export default function InventoryTab({ player }: InventoryTabProps) {
 
   const currentItems = viewMode === 'equipment' ? equippedItems : inventoryItems;
 
-  const debugLog = (
-    <div className="text-xs">
-      <p>Equipped Items:</p>
-      <pre>{JSON.stringify(equippedItems, null, 2)}</pre>
-    </div>
-  );
+  
 
   return (
     <div className="space-y-4">
-      {debugLog}
       {/* View Mode Tabs */}
       <div className="flex bg-amber-100 dark:bg-amber-900/20 rounded-lg p-1">
         {([

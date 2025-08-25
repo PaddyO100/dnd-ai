@@ -40,6 +40,7 @@ function generateDefaultCharacters(campaign: Campaign): Character[] {
   featPoints: 0,
   reputation: 0,
   wealth: 0,
+      quests: [],
       backstory: {
         personality: preset.description,
   bonds: [],
@@ -83,6 +84,7 @@ function generateDefaultCharacters(campaign: Campaign): Character[] {
   featPoints: 0,
   reputation: 0,
   wealth: 0,
+  quests: [],
   }))
 }
 

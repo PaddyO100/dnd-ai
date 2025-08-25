@@ -4,6 +4,7 @@ import Image from 'next/image';
 
 import { useState, useEffect } from 'react';
 import { useGameStore, type GameState, type Player } from '@/lib/state/gameStore';
+import { type CharacterClass } from '@/schemas/character';
 import Sidepanel from './Sidepanel';
 import VisualDice from './VisualDice';
 import DiceResultsDisplay from './DiceResultsDisplay';
@@ -11,6 +12,7 @@ import TutorialOverlay from './tutorial/TutorialOverlay';
 import { AudioControls } from './AudioControls';
 import { useTutorialStore } from '@/lib/tutorial/tutorialState';
 import { getEnhancedDirectorAdvice } from '@/lib/engine/director';
+import { getClassDisplayName } from '@/lib/character/portraitSystem';
 import { audioManager } from '@/lib/audio/audioManager';
 import toast from 'react-hot-toast';
 
@@ -60,7 +62,7 @@ export default function GameView() {
     };
     
     // Small delay to let components mount
-    setTimeout(initAudio, 500);
+    setTimeout(initAudio, 1000);
   }, [triggerEvent]);
 
   // Removed image-generation polling
@@ -257,7 +259,7 @@ export default function GameView() {
                       </span>
                     </div>
                     <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400">
-                      <span>{character.cls}</span>
+                      <span>{getClassDisplayName(character.cls as CharacterClass)}</span>
                       <span>•</span>
                       <span>❤️ {character.hp || 0}/{character.maxHp || 0}</span>
                       <span>•</span>

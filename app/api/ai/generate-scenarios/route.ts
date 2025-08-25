@@ -6,7 +6,7 @@ import { NextResponse } from 'next/server'
 const Input = z.object({
   genre: z.string(),
   frame: z.string(),
-  world: z.object({ magic: z.string(), tech: z.string(), climate: z.string() }),
+  world: z.object({ magic: z.string(), climate: z.string() }),
   players: z.number().min(1).max(6),
   // Classes are optional now; characters can be chosen later
   classes: z.array(z.string()).default([]),
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
       {
         id: `scn-${timestamp}-1`,
         title: `Die verlorenen Artefakte von ${data.world.climate === 'warm' ? 'Solaria' : data.world.climate === 'kalt' ? 'Frostheim' : 'Temporia'}`,
-        summary: `In einer Welt mit ${data.world.magic.toLowerCase()} Magie und ${data.world.tech.toLowerCase()} Technologie müssen die Helden drei verstreute Artefakte finden, bevor sie in die falschen Hände geraten.${conflictText}`,
+        summary: `In einer Welt mit ${data.world.magic.toLowerCase()} Magie müssen die Helden drei verstreute Artefakte finden, bevor sie in die falschen Hände geraten.${conflictText}`,
         mapIdea: `Drei getrennte Regionen: Antike Ruinen, versteckter Tempel, und eine moderne Festung mit magischen Fallen.`,
       },
       {

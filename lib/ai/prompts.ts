@@ -15,7 +15,7 @@ Du bist ein erfahrener Tabletop-RPG-Spielleiter (DM).
 export const SCENARIO_USER = (opts: {
   genre: string;
   frame: string;
-  world: { magic: string; tech: string; climate: string };
+  world: { magic: string; climate: string };
   players: number;
   classes: string[];
   startingWeapons?: string[];
@@ -39,7 +39,7 @@ WICHTIG: Verwende EXAKT diese Feldnamen: "id", "title", "summary", "mapIdea"
 Regeln:
 - Nutze die Benutzerauswahl:
   genre=${opts.genre}, frame=${opts.frame},
-  world={magic:${opts.world.magic},tech:${opts.world.tech},climate:${opts.world.climate}},
+  world={magic:${opts.world.magic},climate:${opts.world.climate}},
   players=${opts.players}, classes=${opts.classes.join(",")}${opts.startingWeapons ? `,
   startingWeapons=${opts.startingWeapons.join(",")}` : ''}${opts.conflict ? `,
   HAUPTKONFLIKT="${opts.conflict}"` : ''}
@@ -245,4 +245,14 @@ ERWEITERTE AI DIRECTOR GUIDANCE:
 Beachte die bisherigen Ereignisse (history) und den Zustand (state).
 Nutze diese Guidance für natürliche, fließende Erzählung.
 KEINE zusätzliche Erklärung außerhalb des JSON.
+`;
+
+export const NAME_GENERATION_PROMPT = (className: string, race: string, gender: string) => `
+Generiere einen passenden Fantasy-Namen für einen Charakter.
+
+Klasse: ${className}
+Rasse: ${race}
+Geschlecht: ${gender}
+
+Gib NUR den Namen zurück, sonst nichts.
 `;

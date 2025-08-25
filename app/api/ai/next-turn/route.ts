@@ -65,6 +65,7 @@ export async function POST(req: Request) {
     if (!raw || typeof raw !== 'string' || raw.trim().length === 0) {
       return NextResponse.json({ error: 'Bad JSON from model', raw: raw ?? null }, { status: 502 });
     }
+    console.log('Raw AI response:', raw);
     try {
       const json = JSON.parse(raw);
       const DiceReq = z.object({ formula: z.string(), reason: z.string().optional() });

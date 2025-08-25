@@ -173,7 +173,7 @@ export default function Sidepanel() {
   );
 }
 
-import { getRaceDisplayName } from '@/lib/character/portraitSystem';
+import { getRaceDisplayName, getStatDisplayName } from '@/lib/character/portraitSystem';
 
 function CharacterTab(props: {
   playerId?: string;
@@ -308,12 +308,7 @@ function CharacterTab(props: {
                     isHighStat ? 'text-green-600' :
                     isLowStat ? 'text-red-600' : 'text-amber-600'
                   }`}>
-                    {k === 'str' ? 'STÄ' :
-                     k === 'dex' ? 'GES' :
-                     k === 'con' ? 'KON' :
-                     k === 'int' ? 'INT' :
-                     k === 'wis' ? 'WEI' :
-                     k === 'cha' ? 'CHA' : k.toUpperCase()}
+                    {getStatDisplayName(k)}
                   </div>
                   <div className={`text-lg font-bold ${
                     isHighStat ? 'text-green-800' :
@@ -414,7 +409,7 @@ function CharacterTab(props: {
                   {traits.filter((trait: any) => trait.type === 'racial').map((trait: any, i: number) => (
                     <div key={i} className="bg-green-50 rounded-lg p-2 border border-green-200">
                       <div className="font-medium text-green-900 text-sm">{trait.name}</div>
-                      <p className="text-xs text-green-700 mt-1">{trait.description}</p>
+                      <p className="text-xs text-green-700 mt-1">{trait.shortDescription || trait.description}</p>
                       {trait.effects && trait.effects.length > 0 && (
                         <div className="mt-1 flex flex-wrap gap-1">
                           {trait.effects.map((effect: any, ei: number) => (

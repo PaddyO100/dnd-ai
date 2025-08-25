@@ -30,6 +30,7 @@ export const Spell = z.object({
 export const Trait = z.object({
   name: z.string(),
   description: z.string(),
+  shortDescription: z.string().optional(),
   type: z.enum(['racial', 'class', 'background', 'special', 'feat']).optional(),
   effects: z.array(z.object({
     type: z.enum(['stat_modifier', 'skill_bonus', 'damage_bonus', 'resistance', 'special_ability', 'spell']),
@@ -83,6 +84,7 @@ export const Character = z.object({
   spells: z.array(Spell).default([]),
   traits: z.array(Trait).default([]),
   inventory: z.array(InventoryItem).default([]),
+  quests: z.array(z.any()).default([]),
   conditions: z.array(Condition).default([]),
   backstory: z.object({
     origin: z.string().optional(),
@@ -129,3 +131,11 @@ export type Spell = z.infer<typeof Spell>
 export type Trait = z.infer<typeof Trait>
 export type InventoryItem = z.infer<typeof InventoryItem>
 export type Condition = z.infer<typeof Condition>
+
+export const Quest = z.object({
+  title: z.string(),
+  status: z.enum(['open', 'in-progress', 'completed', 'failed']),
+  note: z.string().optional(),
+});
+
+export type Quest = z.infer<typeof Quest>;

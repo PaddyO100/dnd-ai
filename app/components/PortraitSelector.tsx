@@ -49,6 +49,7 @@ export default function PortraitSelector({
       <div className="flex flex-col items-center space-y-3">
         <div className="relative w-48 h-48 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
           <Image
+            key={currentPortraitUrl}
             src={imageError ? getFallbackPortraitUrl() : currentPortraitUrl}
             alt={portraitInfo.displayName}
             fill

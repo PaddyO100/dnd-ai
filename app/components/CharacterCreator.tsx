@@ -7,13 +7,14 @@ import {
   characterClasses, 
   StatDistribution,
   validatePointBuy,
-  calculatePointBuyCost 
+  calculatePointBuyCost,
+  itemTemplates
 } from '@/lib/character/characterGenerator';
 import { skillDefinitions, SkillName } from '@/lib/character/skillSystem';
 import { getRaceDisplayName, getGenderDisplayName } from '@/lib/character/portraitSystem';
-import { getClassWeaponInfo } from '@/lib/character/classWeaponSystem';
+import { getClassWeaponInfo, isWeaponAllowed, getWeaponEfficiency } from '@/lib/character/classWeaponSystem';
 import { useGameStore } from '@/lib/state/gameStore';
-import PortraitSelector from './PortraitSelector';
+import { useTranslation } from '@/lib/hooks/useTranslation';
 
 interface CharacterCreatorProps {
   onCharacterCreated: (character: Character) => void;
@@ -21,6 +22,7 @@ interface CharacterCreatorProps {
 }
 
 export default function CharacterCreator({ onCharacterCreated, onClose }: CharacterCreatorProps) {
+  const { t } = useTranslation();
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,12 +32,13 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
   const [selectedClass, setSelectedClass] = useState<CharacterClass>('warrior');
   const [selectedRace, setSelectedRace] = useState<Race>('human');
   const [selectedGender, setSelectedGender] = useState<Gender>('male');
-  const [statMethod, setStatMethod] = useState<'point_buy' | 'rolled' | 'standard_array'>('point_buy');
+  const [statMethod, setStatMethod] = useState<'rolled'>('rolled');
   const [stats, setStats] = useState<StatDistribution>({
     strength: 8, dexterity: 8, constitution: 8,
     intelligence: 8, wisdom: 8, charisma: 8
   });
   const [selectedSkills, setSelectedSkills] = useState<SkillName[]>([]);
+  const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
   const [generateBackstory, setGenerateBackstory] = useState(true);
   
   const steps = [
@@ -43,24 +46,12 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
     { title: 'Rasse & Portrait', description: 'Rasse und Aussehen wählen' },
     { title: 'Attribute', description: 'Verteilung der Charakterwerte' },
     { title: 'Fertigkeiten', description: 'Zusätzliche Fähigkeiten wählen' },
+    { title: 'Ausrüstung', description: 'Waffen und Rüstung wählen' },
     { title: 'Hintergrund', description: 'Charaktergeschichte und Details' },
     { title: 'Bestätigung', description: 'Charaktererstellung abschließen' }
   ];
 
-  // Calculate point-buy validation
-  const pointBuyValidation = validatePointBuy(stats);
-  const availablePoints = 27 - pointBuyValidation.pointsUsed;
-
-  const handleStatChange = (stat: keyof StatDistribution, newValue: number) => {
-    if (statMethod !== 'point_buy') return;
-    
-    const currentValue = stats[stat];
-    const cost = calculatePointBuyCost(currentValue, newValue);
-    
-    if (newValue >= 8 && newValue <= 18 && (cost <= availablePoints || newValue < currentValue)) {
-      setStats(prev => ({ ...prev, [stat]: newValue }));
-    }
-  };
+  
 
   const { selections } = useGameStore();
   const campaign = selections.campaign;
@@ -80,6 +71,7 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
         statMethod,
         generateBackstory,
         customStats: statMethod === 'point_buy' ? stats : undefined,
+        customEquipment: selectedEquipment,
         campaign: campaign
       });
 
@@ -110,13 +102,32 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium mb-2">Charaktername</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-2 border-2 border-amber-200 rounded-lg focus:border-amber-400 transition-colors"
-                placeholder="Gib deinem Charakter einen Namen..."
-              />
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full px-4 py-2 border-2 border-amber-200 rounded-lg focus:border-amber-400 transition-colors"
+                  placeholder="Gib deinem Charakter einen Namen..."
+                />
+                <button
+                  onClick={async () => {
+                    setLoading(true);
+                    const res = await fetch('/api/ai/generate-name', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ class: selectedClass, race: selectedRace, gender: selectedGender }),
+                    });
+                    const data = await res.json();
+                    setName(data.name);
+                    setLoading(false);
+                  }}
+                  disabled={loading}
+                  className="px-4 py-2 rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors disabled:opacity-50"
+                >
+                  {loading ? '...' : '🎲'}
+                </button>
+              </div>
             </div>
             
             <div>
@@ -140,7 +151,7 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
                           key={stat}
                           className="px-2 py-1 bg-amber-100 text-amber-800 text-xs rounded"
                         >
-                          {stat}
+                          {t(`character.stats.${stat}`)}
                         </span>
                       ))}
                     </div>
@@ -186,81 +197,11 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
       case 2:
         return (
           <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium mb-2">Attributsverteilung</label>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                {Object.entries({
-                  'point_buy': 'Point-Buy (27 Punkte)',
-                  'standard_array': 'Standard Array',
-                  'rolled': 'Gewürfelt (4d6)'
-                }).map(([method, label]) => (
-                  <button
-                    key={method}
-                    onClick={() => setStatMethod(method as 'point_buy' | 'rolled' | 'standard_array')}
-                    className={`p-3 rounded-lg border-2 transition-all ${
-                      statMethod === method
-                        ? 'border-amber-400 bg-amber-50'
-                        : 'border-amber-200 hover:border-amber-300'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-600">
+                Attribute werden zufällig gewürfelt (4d6, niedrigsten Würfel weglassen).
+              </p>
             </div>
-
-            {statMethod === 'point_buy' && (
-              <div>
-                <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm">
-                    Verbleibende Punkte: <span className="font-semibold">{availablePoints}</span>
-                  </p>
-                  {!pointBuyValidation.valid && (
-                    <p className="text-red-600 text-sm mt-1">
-                      {pointBuyValidation.errors.join(', ')}
-                    </p>
-                  )}
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  {Object.entries(stats).map(([stat, value]) => (
-                    <div key={stat} className="space-y-2">
-                      <label className="block text-sm font-medium capitalize">
-                        {stat} ({value})
-                      </label>
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => handleStatChange(stat as keyof StatDistribution, value - 1)}
-                          disabled={value <= 8}
-                          className="w-8 h-8 rounded-full bg-red-200 hover:bg-red-300 disabled:opacity-50"
-                        >
-                          -
-                        </button>
-                        <span className="w-8 text-center font-medium">{value}</span>
-                        <button
-                          onClick={() => handleStatChange(stat as keyof StatDistribution, value + 1)}
-                          disabled={value >= 18 || calculatePointBuyCost(value, value + 1) > availablePoints}
-                          className="w-8 h-8 rounded-full bg-green-200 hover:bg-green-300 disabled:opacity-50"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {statMethod !== 'point_buy' && (
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-600">
-                  {statMethod === 'standard_array' 
-                    ? 'Attribute werden automatisch nach dem Standard Array verteilt (15, 14, 13, 12, 10, 8)'
-                    : 'Attribute werden zufällig gewürfelt (4d6, niedrigsten Würfel weglassen)'
-                  }
-                </p>
-              </div>
-            )}
           </div>
         );
 
@@ -305,7 +246,7 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
                   <h4 className="font-medium">{skillDef.name}</h4>
                   <p className="text-sm text-gray-600 mt-1">{skillDef.description}</p>
                   <span className="inline-block mt-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
-                    {skillDef.category}
+                    {t(`character.skills.${skillDef.category.toLowerCase()}`)}
                   </span>
                 </button>
               ))}
@@ -329,7 +270,80 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
           </div>
         );
 
-      case 4:
+      case 4: {
+        const classData = characterClasses[selectedClass];
+        if (!classData) return null;
+
+        const availableEquipment = classData.startingItems;
+
+        return (
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Ausrüstung wählen
+              </label>
+              <p className="text-sm text-gray-600 mb-4">
+                Wähle die Startausrüstung für deinen Charakter.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto">
+              {availableEquipment.map((itemKey) => {
+                const item = itemTemplates[itemKey];
+                if (!item) return null;
+
+                const isSelected = selectedEquipment.includes(itemKey);
+
+                return (
+                  <button
+                    key={itemKey}
+                    onClick={() => {
+                      if (isSelected) {
+                        setSelectedEquipment(prev => prev.filter(i => i !== itemKey));
+                      } else {
+                        setSelectedEquipment(prev => [...prev, itemKey]);
+                      }
+                    }}
+                    className={`p-3 rounded-lg border-2 text-left transition-all disabled:opacity-50 ${
+                      isSelected
+                        ? 'border-amber-400 bg-amber-50'
+                        : 'border-amber-200 hover:border-amber-300'
+                    }`}
+                  >
+                    <h4 className="font-medium">{item.name}</h4>
+                    <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                    {item.type === 'weapon' && (() => {
+                      try {
+                        const weaponType = isWeaponAllowed(selectedClass, item.name);
+                        const efficiency = getWeaponEfficiency(selectedClass, item.name);
+                        
+                        return (
+                          <div className={`inline-block ml-2 px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                            weaponType === 'primary' ? 'bg-green-100 text-green-700' :
+                            weaponType === 'secondary' ? 'bg-yellow-100 text-yellow-700' :
+                            weaponType === 'forbidden' ? 'bg-red-100 text-red-700' :
+                            'bg-gray-100 text-gray-600'
+                          }`}>
+                            {weaponType === 'primary' && '✓ Primär'}
+                            {weaponType === 'secondary' && '~ Sekundär'}
+                            {weaponType === 'forbidden' && '✗ Verboten'}
+                            {!['primary', 'secondary', 'forbidden'].includes(weaponType) && '? Unbekannt'}
+                            {efficiency !== 1.0 && ` (${Math.round(efficiency * 100)}%)`}
+                          </div>
+                        );
+                      } catch {
+                        return null;
+                      }
+                    })()}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      }
+
+      case 5:
         return (
           <div className="space-y-6">
             <div>
@@ -371,7 +385,7 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
           </div>
         );
 
-      case 5:
+      case 6: {
         const classData = selectedClass ? characterClasses[selectedClass] : null;
         
         return (
@@ -392,16 +406,7 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
                   }</p>
                 </div>
 
-                {statMethod === 'point_buy' && (
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <h4 className="font-semibold mb-2">Attribute</h4>
-                    {Object.entries(stats).map(([stat, value]) => (
-                      <p key={stat} className="capitalize">
-                        <strong>{stat}:</strong> {value}
-                      </p>
-                    ))}
-                  </div>
-                )}
+                
               </div>
 
               <div className="space-y-4">
@@ -428,6 +433,7 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
             )}
           </div>
         );
+      }
 
       default:
         return null;
@@ -493,19 +499,10 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
           {step < steps.length - 1 ? (
             <button
               onClick={() => {
-                if (step === 0 && (!name.trim() || !selectedClass)) {
-                  setError('Name und Klasse sind erforderlich');
-                  return;
-                }
-                if (step === 2 && statMethod === 'point_buy' && !pointBuyValidation.valid) {
-                  setError('Ungültige Attributsverteilung');
-                  return;
-                }
                 setError(null);
                 setStep(s => s + 1);
               }}
-              disabled={(step === 0 && (!name.trim() || !selectedClass)) || 
-                       (step === 2 && statMethod === 'point_buy' && !pointBuyValidation.valid)}
+              disabled={(step === 0 && (!name.trim() || !selectedClass))}
               className="px-6 py-2 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-amber-500 text-white hover:bg-amber-600"
             >
               Weiter

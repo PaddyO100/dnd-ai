@@ -23,6 +23,7 @@ export default function OnboardingWizard() {
   const [selectedScenario, setSelectedScenario] = useState<Scenario | undefined>(selections.scenario || undefined);
   const [loading, setLoading] = useState<boolean>(false);
   const [party, setParty] = useState<Player[]>([]);
+  const [characterCount, setCharacterCount] = useState(0);
 
   useEffect(() => {
     audioManager.changeScene('character_creation');
@@ -98,7 +99,7 @@ export default function OnboardingWizard() {
     setParty(newParty);
     if (newParty.length < players) {
       // More characters to create
-      // Reset CharacterCreator state if needed, or just let it be for the next one
+      setCharacterCount(c => c + 1);
     } else {
       // All characters created, start the game
       startGame(selectedScenario!, newParty);
@@ -108,6 +109,7 @@ export default function OnboardingWizard() {
   if (step === 6) {
     return (
       <CharacterCreator
+        key={characterCount}
         onCharacterCreated={handleCharacterCreated}
         onClose={() => setStep(5)}
       />

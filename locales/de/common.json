@@ -109,5 +109,22 @@
     "delete": "Löschen",
     "edit": "Bearbeiten",
     "close": "Schließen"
+  },
+  "character": {
+    "stats": {
+      "strength": "Stärke",
+      "dexterity": "Geschicklichkeit",
+      "constitution": "Konstitution",
+      "intelligence": "Intelligenz",
+      "wisdom": "Weisheit",
+      "charisma": "Charisma"
+    },
+    "skills": {
+      "combat": "Kampf",
+      "magic": "Magie",
+      "utility": "Nützlichkeit",
+      "social": "Sozial",
+      "survival": "Überleben"
+    }
   }
 }

@@ -66,6 +66,18 @@ export function getClassDisplayName(characterClass: CharacterClass): string {
   return displayNames[characterClass] || characterClass
 }
 
+export function getStatDisplayName(stat: string): string {
+  const displayNames: Record<string, string> = {
+    strength: 'Stärke',
+    dexterity: 'Geschicklichkeit',
+    constitution: 'Konstitution',
+    intelligence: 'Intelligenz',
+    wisdom: 'Weisheit',
+    charisma: 'Charisma',
+  };
+  return displayNames[stat] || stat;
+}
+
 // Get all available options
 export function getAllRaces(): Race[] {
   return ['human', 'orc', 'dark_elf', 'high_elf', 'wood_elf', 'dwarf']

@@ -1,11 +1,12 @@
 // lib/character/characterGenerator.ts
 
-import { Character, Skill, Trait, InventoryItem, Race, Gender } from '@/schemas/character';
-import { skillDefinitions, SkillName } from './skillSystem';
+import { Character, Skill, Trait, InventoryItem, Race, Gender, Quest } from '@/schemas/character';
+import { skillDefinitions, SkillName, spellDefinitions } from './skillSystem';
 import { generateAIBackstory } from './backstoryGenerator';
 import { applyRacialBonuses, getRacialTraits } from './raceSystem';
 import { getClassWeaponInfo } from './classWeaponSystem';
 import { getPortraitUrl } from './portraitSystem';
+import { itemTemplates } from './itemGenerator';
 
 export interface StatDistribution {
   strength: number;
@@ -31,95 +32,97 @@ export interface CharacterClass {
 export const characterClasses: Record<string, CharacterClass> = {
   warrior: {
     name: "Krieger",
-    description: "Meister des Kampfes mit Waffen und Rüstung",
+    description: "Krieger sind die unerschütterlichen Bollwerke auf dem Schlachtfeld. Sie sind Meister aller Waffen, von scharfen Schwertern bis zu schweren Äxten, und tragen die stärksten Rüstungen. Ihre Ausbildung konzentriert sich auf rohe Stärke, Ausdauer und taktisches Geschick. Ein Krieger ist immer an vorderster Front zu finden, um seine Verbündeten zu schützen und Feinde mit überwältigender Kraft zu vernichten.",
     primaryStats: ["strength", "constitution"],
     startingSkills: ["melee_combat", "athletics", "intimidation"],
     startingTraits: ["combat_training", "weapon_expertise"],
-    startingItems: ["langschwert", "schild", "kettenhemd", "heiltrank"],
+    startingItems: ["langschwert", "kurzschwert", "schild", "kettenhemd", "heiltrank"],
+    startingSpells: ["klingenschild"],
     hpMultiplier: 1.3,
     mpMultiplier: 0.8
   },
   mage: {
     name: "Magier",
-    description: "Gelehrter der arkanen Künste und Zaubersprüche",
+    description: "Magier sind Gelehrte der arkanen Künste, die die Realität durch das Wirken mächtiger Zaubersprüche formen. Sie verbringen Jahre mit dem Studium alter Folianten und dem Entschlüsseln mystischer Geheimnisse. Obwohl sie im direkten Kampf verletzlich sind, können sie aus der Ferne verheerenden Schaden anrichten, ihre Verbündeten schützen oder das Schlachtfeld mit Illusionen und Kontrollelementen manipulieren.",
     primaryStats: ["intelligence", "wisdom"],
     startingSkills: ["arcane_knowledge", "spell_focus", "investigation"],
     startingTraits: ["arcane_sight", "spell_knowledge"],
-    startingItems: ["zauberstab", "robe", "zauberbuch", "manatrank"],
+    startingItems: ["stab", "dolch", "stoffruestung", "manatrank"],
     startingSpells: ["feuerball", "magisches_geschoss", "schild"],
     hpMultiplier: 0.8,
     mpMultiplier: 1.5
   },
   rogue: {
     name: "Schurke",
-    description: "Meister der Heimlichkeit und des präzisen Angriffs",
+    description: "Schurken sind Meister der Schatten, der Täuschung und des präzisen Angriffs. Sie bewegen sich ungesehen, entschärfen Fallen und öffnen verschlossene Türen mit Leichtigkeit. Im Kampf nutzen sie ihre Agilität und ihr schnelles Denken, um die Schwachstellen ihrer Feinde auszunutzen. Ein Schurke verlässt sich lieber auf List und Tücke als auf rohe Gewalt und ist ein unverzichtbarer Meister der verdeckten Operationen.",
     primaryStats: ["dexterity", "intelligence"],
     startingSkills: ["stealth", "lockpicking", "sleight_of_hand"],
     startingTraits: ["sneak_attack", "nimble"],
-    startingItems: ["kurzschwert", "dolch", "lederruestung", "dietriche"],
+    startingItems: ["kurzschwert", "dolch", "lederruestung", "diebeswerkzeug", "heiltrank"],
     hpMultiplier: 1.0,
     mpMultiplier: 1.0
   },
   ranger: {
     name: "Waldläufer",
-    description: "Experte für Natur, Überlebenskunst und Fernkampf",
+    description: "Waldläufer sind die unübertroffenen Meister der Wildnis. Sie sind erfahrene Jäger, Spurenleser und Überlebenskünstler, die eine tiefe Verbindung zur Natur haben. Mit Bogen und Pfeil sind sie aus der Ferne tödlich und oft von einem treuen Tiergefährten begleitet. Ihre Fähigkeiten machen sie zu exzellenten Fährtensuchern und Beschützern der unberührten Gebiete der Welt.",
     primaryStats: ["dexterity", "wisdom"],
     startingSkills: ["survival", "nature_lore", "ranged_combat"],
     startingTraits: ["nature_bond", "tracking"],
-    startingItems: ["langbogen", "pfeile", "lederruestung", "heiltrank"],
+    startingItems: ["langbogen", "kurzbogen", "pfeile", "lederruestung", "heiltrank"],
+    startingSpells: ["giftpfeil", "dornenpfeil"],
     hpMultiplier: 1.1,
     mpMultiplier: 1.1
   },
   
   bard: {
     name: "Barde",
-    description: "Ein charismatischer Künstler, der mit Musik und Worten Magie wirkt.",
+    description: "Barden sind charismatische Künstler, deren Magie in ihren Liedern, Geschichten und Darbietungen liegt. Sie sind die Seele jeder Abenteurergruppe, inspirieren ihre Verbündeten mit heldenhaften Balladen und schwächen ihre Feinde mit entmutigenden Versen. Mit ihrer scharfen Zunge und ihrem schnellen Verstand können sie Konflikte oft ohne einen einzigen Schwerthieb lösen.",
     primaryStats: ["charisma", "dexterity"],
     startingSkills: ["performance", "persuasion", "deception"],
     startingTraits: ["silver_tongue", "inspiration"],
-    startingItems: ["rapier", "lederruestung", "laute", "manatrank"],
+    startingItems: ["rapier", "dolch", "lederruestung", "laute", "manatrank"],
     hpMultiplier: 1.0,
     mpMultiplier: 1.2
   },
   paladin: {
     name: "Paladin",
-    description: "Ein heiliger Krieger, der einem Eid geschworen hat und das Böse bekämpft.",
+    description: "Paladine sind heilige Krieger, die einem göttlichen Eid verpflichtet sind. Sie kanalisieren die Macht ihres Glaubens, um die Unschuldigen zu schützen, das Böse zu vernichten und das Licht der Hoffnung in die dunkelsten Ecken der Welt zu tragen. Ihre Fähigkeiten kombinieren Kampfkunst mit heilender und schützender Magie, was sie zu standhaften Verteidigern und Anführern macht.",
     primaryStats: ["strength", "charisma"],
     startingSkills: ["divine_magic", "melee_combat", "insight"],
     startingTraits: ["divine_smite", "lay_on_hands"],
-    startingItems: ["streitkolben", "schild", "plattenpanzer", "heiligensymbol"],
+    startingItems: ["langschwert", "kriegshammer", "schild", "kettenhemd", "heiligensymbol"],
     startingSpells: ["heilung", "schutz_vor_boesem"],
     hpMultiplier: 1.2,
     mpMultiplier: 1.1
   },
   druid: {
     name: "Druide",
-    description: "Ein Wächter der Natur, der die Macht der Wildnis und der Tiere nutzt.",
+    description: "Druiden sind die Wächter der Natur und schöpfen ihre Macht aus der Essenz der Wildnis. Sie können die Gestalt von Tieren annehmen, Pflanzen kontrollieren und die Elemente befehligen. Ihre Magie ist sowohl schöpferisch als auch zerstörerisch, immer im Gleichgewicht mit der Natur. Ein Druide ist ein weiser Ratgeber und ein furchterregender Gegner für alle, die das natürliche Gleichgewicht stören.",
     primaryStats: ["wisdom", "constitution"],
     startingSkills: ["nature_lore", "animal_handling", "survival"],
     startingTraits: ["wild_shape", "nature_magic"],
-    startingItems: ["holzschild", "keule", "kraeuterbeutel", "heiltrank"],
+    startingItems: ["stab", "keule", "lederruestung", "kraeuterbeutel", "heiltrank"],
     startingSpells: ["dornenpeitsche", "heilen"],
     hpMultiplier: 1.1,
     mpMultiplier: 1.2
   },
   monk: {
     name: "Mönch",
-    description: "Ein disziplinierter Kampfkünstler, der seinen Körper als Waffe einsetzt.",
+    description: "Mönche sind disziplinierte Kampfkünstler, die ihren Körper und Geist zur Perfektion trainiert haben. Sie benötigen keine Waffen, denn ihre Hände und Füße sind tödlicher als jedes Schwert. Durch die Kontrolle ihrer Lebensenergie, auch Ki genannt, können sie übermenschliche Leistungen vollbringen, wie zum Beispiel pfeilschnelle Schlagkombinationen ausführen oder magischen Angriffen widerstehen.",
     primaryStats: ["dexterity", "wisdom"],
     startingSkills: ["acrobatics", "athletics", "insight"],
     startingTraits: ["unarmored_defense", "flurry_of_blows"],
-    startingItems: ["kurzschwert", "wurfpfeile", "heiltrank"],
+    startingItems: ["kurzschwert", "speer", "wurfpfeile", "heiltrank"],
     hpMultiplier: 1.1,
     mpMultiplier: 1.0
   },
   warlock: {
     name: "Hexenmeister",
-    description: "Ein Magier, der seine Macht von einem mächtigen, außerweltlichen Wesen bezieht.",
+    description: "Hexenmeister gehen einen Pakt mit mächtigen, oft mysteriösen Wesenheiten ein, um Zugang zu arkaner Macht zu erhalten. Ihre Magie ist ein Geschenk oder ein Handel und oft unheimlicher Natur. Sie verlassen sich auf wenige, aber starke Zauber und unheimliche Fähigkeiten, die ihnen von ihrem Patron verliehen werden. Ein Hexenmeister wandelt auf einem schmalen Grat zwischen Kontrolle und dem Wahnsinn, den seine Macht mit sich bringen kann.",
     primaryStats: ["charisma", "constitution"],
     startingSkills: ["arcane_knowledge", "deception", "intimidation"],
     startingTraits: ["eldritch_blast", "dark_ones_blessing"],
-    startingItems: ["dolch", "zauberfokus", "grimoire", "manatrank"],
+    startingItems: ["dolch", "leichte_armbrust", "stoffruestung", "zauberfokus", "manatrank"],
     startingSpells: ["schauriger_strahl", "hexenpfeil"],
     hpMultiplier: 1.0,
     mpMultiplier: 1.3
@@ -293,185 +296,7 @@ export const traitDefinitions: Record<string, Trait> = {
   }
 };
 
-export const itemTemplates: Record<string, Omit<InventoryItem, 'quantity'>> = {
-  // Waffen
-  langschwert: {
-    name: "Langschwert",
-    type: "weapon",
-    subtype: "main_hand",
-    location: "inventory",
-    value: 15,
-    effects: [{ type: "damage_bonus", value: "1d8", description: "Versatile weapon damage" }],
-    rarity: "common",
-    weight: 3,
-    description: "1d8+STR Schaden, vielseitig (1d10 beidhändig)",
-    equipped: false
-  },
-  dolch: {
-    name: "Dolch", 
-    type: "weapon",
-    subtype: "main_hand",
-    location: "inventory",
-    value: 2,
-    effects: [{ type: "damage_bonus", value: "1d4", description: "Light finesse weapon" }],
-    rarity: "common",
-    weight: 1,
-    description: "1d4+DEX Schaden, werfbar, finesse",
-    equipped: false
-  },
-  bogen: {
-    name: "Bogen",
-    type: "weapon",
-    subtype: "two_handed",
-    location: "inventory", 
-    value: 25,
-    effects: [{ type: "damage_bonus", value: "1d8", description: "Ranged weapon" }],
-    rarity: "common",
-    weight: 2,
-    description: "1d8+DEX Schaden, Reichweite 150/600ft",
-    equipped: false
-  },
-  zauberstab: {
-    name: "Zauberstab",
-    type: "weapon",
-    subtype: "main_hand",
-    location: "inventory",
-    value: 100,
-    effects: [{ type: "spell", value: "+1", description: "Magic weapon bonus" }],
-    rarity: "uncommon",
-    weight: 1,
-    description: "+1 Zauberbonus, 1d6 arkaner Schaden",
-    equipped: false
-  },
-  
-  // Rüstung
-  lederschiene: {
-    name: "Lederschiene",
-    type: "armor",
-    subtype: "chest",
-    location: "inventory",
-    value: 10,
-    effects: [{ type: "stat_bonus", value: "11+DEX", description: "Armor Class bonus" }],
-    rarity: "common",
-    weight: 10,
-    description: "RK 11 + DEX Bonus (max 2)",
-    equipped: false
-  },
-  
-  // Verbrauchsgegenstände
-  heiltrank: {
-    name: "Heiltrank",
-    type: "consumable",
-    subtype: "none",
-    location: "inventory", 
-    value: 50,
-    effects: [{ type: "spell", value: "2d4+2", description: "Healing potion" }],
-    rarity: "common",
-    weight: 0.5,
-    description: "Heilt 2d4+2 Trefferpunkte",
-    equipped: false
-  },
-  manatrank: {
-    name: "Manatrank",
-    type: "consumable",
-    subtype: "none",
-    location: "inventory",
-    value: 25,
-    effects: [{ type: "spell", value: "1d4+1", description: "Mana restoration" }],
-    rarity: "common",
-    weight: 0.5,
-    description: "Stellt 1d4+1 Manapunkte wieder her", 
-    equipped: false
-  },
-  rations: {
-    name: "Reiserationen",
-    type: "consumable",
-    subtype: "none",
-    location: "inventory",
-    value: 2,
-    effects: [{ type: "passive", value: "sustenance", description: "Daily food" }],
-    rarity: "common",
-    weight: 2,
-    description: "Nahrung für einen Tag",
-    equipped: false
-  },
-  
-  // Werkzeuge
-  dietriche: {
-    name: "Dietriche",
-    type: "tool",
-    subtype: "none",
-    location: "inventory",
-    value: 25,
-    effects: [{ type: "stat_bonus", value: "+2", description: "Lockpicking bonus" }],
-    rarity: "common",
-    weight: 1,
-    description: "+2 Bonus beim Schlösser knacken",
-    equipped: false
-  },
-  seil: {
-    name: "Seil (15m)",
-    type: "tool",
-    subtype: "none",
-    location: "inventory", 
-    value: 2,
-    effects: [{ type: "passive", value: "utility", description: "Climbing and binding" }],
-    rarity: "common",
-    weight: 3,
-    description: "Hanfseil für Klettern und Fesseln",
-    equipped: false
-  },
-  pfeile: {
-    name: "Pfeile (30 Stück)",
-    type: "misc",
-    subtype: "none",
-    location: "inventory",
-    value: 1,
-    effects: [{ type: "passive", value: "ammunition", description: "Bow ammunition" }],
-    rarity: "common",
-    weight: 1,
-    description: "Munition für Bogen",
-    equipped: false
-  },
-  
-  // Magische Gegenstände
-  zauberkomponenten: {
-    name: "Zauberkomponenten",
-    type: "misc",
-    subtype: "none",
-    location: "inventory",
-    value: 25,
-    effects: [{ type: "passive", value: "spell_focus", description: "Spellcasting materials" }],
-    rarity: "common",
-    weight: 1,
-    description: "Materialien für Zaubersprüche",
-    equipped: false
-  },
-  heiligensymbol: {
-    name: "Heiliges Symbol",
-    type: "misc",
-    subtype: "none",
-    location: "inventory",
-    value: 5,
-    effects: [{ type: "passive", value: "divine_focus", description: "Divine spellcasting focus" }],
-    rarity: "common",
-    weight: 1,
-    description: "Fokus für göttliche Magie",
-    equipped: false
-  },
-  gebetsbuch: {
-    name: "Gebetsbuch",
-    type: "misc",
-    subtype: "none",
-    location: "inventory",
-    value: 25,
-    effects: [{ type: "passive", value: "divine_knowledge", description: "Religious texts and prayers" }],
-    rarity: "common",
-    weight: 3,
-    description: "Sammlung heiliger Texte und Gebete",
-    equipped: false
-  }
-};
+import { itemTemplates } from './itemGenerator';
 
 /**
  * Point-Buy Kosten für Attributswerte
@@ -480,6 +305,35 @@ const POINT_BUY_COSTS: Record<number, number> = {
   8: 0, 9: 1, 10: 2, 11: 3, 12: 4, 13: 5,
   14: 7, 15: 9, 16: 12, 17: 15, 18: 19
 };
+
+/**
+ * Generiert Start-Zauber basierend auf Klasse und Rasse
+ */
+export function generateStartingSpells(className: string, race: Race): any[] {
+  const classData = characterClasses[className.toLowerCase()];
+  if (!classData) return [];
+
+  const allowedSpells = Object.entries(spellDefinitions).filter(([, spellDef]) => {
+    const classAllowed = spellDef.allowedClasses.length === 0 || spellDef.allowedClasses.includes(className.toLowerCase());
+    const raceAllowed = spellDef.allowedRaces.length === 0 || spellDef.allowedRaces.includes(race);
+    return classAllowed && raceAllowed;
+  });
+
+  // Nimm eine Auswahl an Zaubern, die zur Klasse passen
+  const startingSpells = (classData.startingSpells || []).map(spellName => spellDefinitions[spellName]).filter(Boolean);
+
+  // Füge Rassen-spezifische Zauber hinzu
+  const racialSpells = allowedSpells
+    .filter(([, spellDef]) => spellDef.allowedRaces.includes(race))
+    .map(([, spellDef]) => spellDef);
+
+  // Kombiniere und entferne Duplikate
+  const allSpells = [...startingSpells, ...racialSpells];
+  const uniqueSpells = Array.from(new Set(allSpells.map(s => s.name)))
+    .map(name => allSpells.find(s => s.name === name));
+
+  return uniqueSpells.filter(Boolean);
+}
 
 /**
  * Generiert eine ausgewogene Attributsverteilung basierend auf Klasse
@@ -692,6 +546,25 @@ export function generateTraits(className: string): Trait[] {
   return traits;
 }
 
+export function generateStartingQuests(className: string): Quest[] {
+  const classQuests: Record<string, Quest[]> = {
+    warrior: [
+      { title: 'Beweise deine Stärke', status: 'open', note: 'Besiege 10 Goblins in den Wäldern.' },
+      { title: 'Die Schmiede ruft', status: 'open', note: 'Sammle 5 Eisenerz, um deine Waffe zu verbessern.' },
+    ],
+    mage: [
+      { title: 'Verlorenes Wissen', status: 'open', note: 'Finde das vermisste Zauberbuch in der alten Bibliothek.' },
+      { title: 'Magische Zutaten', status: 'open', note: 'Sammle 3 Mondblumen für ein seltenes Ritual.' },
+    ],
+    rogue: [
+      { title: 'Die Gilde der Schatten', status: 'open', note: 'Stiehl den goldenen Kelch aus dem Haus des Bürgermeisters.' },
+      { title: 'Eine Nachricht für einen Freund', status: 'open', note: 'Überbringe eine geheime Nachricht an den Kontakt in der Taverne.' },
+    ],
+  };
+
+  return classQuests[className.toLowerCase()] || [];
+}
+
 /**
  * Generiert Waffenrestriktions-Traits basierend auf Klasse
  */
@@ -748,12 +621,13 @@ export function generateWeaponRestrictionTraits(className: string): Trait[] {
  */
 export function generateStartingInventory(
   className: string,
-  difficulty: 'beginner' | 'intermediate' | 'advanced' = 'intermediate'
+  difficulty: 'beginner' | 'intermediate' | 'advanced' = 'intermediate',
+  customEquipment?: string[]
 ): InventoryItem[] {
   const classData = characterClasses[className.toLowerCase()];
   if (!classData) return [];
 
-  const startingItems = [...classData.startingItems];
+  const startingItems = customEquipment || [...classData.startingItems];
 
   // Passe die Ausrüstung basierend auf dem Schwierigkeitsgrad an
   if (difficulty === 'beginner') {
@@ -769,7 +643,7 @@ export function generateStartingInventory(
     }
   }
 
-  return startingItems.map((itemKey, index) => {
+  return startingItems.map((itemKey) => {
     const template = itemTemplates[itemKey];
     if (!template) {
       console.warn(`Item template not found: ${itemKey}`);
@@ -790,14 +664,9 @@ export function generateStartingInventory(
       weight: template.weight,
     };
 
-    // Auto-equip primary weapons and armor
-    if (template.type === 'weapon' && index === 0) {
-      item.equipped = true;
-      item.location = 'equipped';
-    } else if (template.type === 'armor') {
-      item.equipped = true;
-      item.location = 'equipped';
-    }
+    // Auto-equip all starting items
+    item.equipped = true;
+    item.location = 'equipped';
 
     return item;
   }).filter(Boolean) as InventoryItem[];
@@ -836,6 +705,7 @@ export async function generateCharacter(
     statMethod?: 'point_buy' | 'rolled' | 'standard_array';
     generateBackstory?: boolean;
     customStats?: StatDistribution;
+    customEquipment?: string[];
     customOptions?: Partial<Character>;
     campaign?: PredefinedCampaign;
   } = {}
@@ -846,6 +716,7 @@ export async function generateCharacter(
     statMethod = 'point_buy',
     generateBackstory = true,
     customStats,
+    customEquipment,
     customOptions = {},
     campaign = undefined
   } = options;
@@ -860,8 +731,11 @@ export async function generateCharacter(
   const traits = generateTraits(className);
   const racialTraits = getRacialTraits(race);
   const weaponRestrictionTraits = generateWeaponRestrictionTraits(className);
-  const inventory = generateStartingInventory(className, campaign?.difficulty);
+  const inventory = generateStartingInventory(className, campaign?.difficulty, customEquipment);
+  const quests = generateStartingQuests(className);
+  const classData = characterClasses[className.toLowerCase()];
   const derived = calculateDerivedStats(modifiedStats, className);
+  const spells = generateStartingSpells(className, race);
   
   // Generate physical attributes
   const physicalAttributes = generatePhysicalAttributes();
@@ -880,11 +754,12 @@ export async function generateCharacter(
     skills,
     traits: [...traits, ...racialTraits, ...weaponRestrictionTraits], // Combine class, racial, and weapon restriction traits
     inventory,
+    quests,
     armorClass: derived.armorClass,
     level: 1,
     experience: 0,
     conditions: [],
-    spells: [],
+    spells: spells,
     portraitUrl: getPortraitUrl(className as 'warrior' | 'mage' | 'rogue' | 'bard' | 'paladin' | 'ranger' | 'druid' | 'monk' | 'warlock', race, gender), // Set portrait based on selection
     portraitSeed: Math.floor(Math.random() * 1000000),
     skillPoints: 0,

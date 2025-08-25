@@ -704,3 +704,120 @@ export function exportSkillSummary(skills: Skill[], stats: Record<string, number
     return `${skill.name} (Level ${skill.level}, +${bonus}): ${benefit}`;
   }).join('\n');
 }
+
+export const spellDefinitions: Record<string, { name: string; cost: number; description: string; school: string; type: string; tags: string[]; allowedClasses: string[]; allowedRaces: string[]; }> = {
+  // --- Allgemeine Magie ---
+  feuerball: { 
+    name: 'Feuerball', cost: 10, description: 'Ein flammendes Geschoss, das bei Aufprall explodiert.', 
+    school: 'evocation', type: 'arcane', tags: ['fire', 'aoe'], 
+    allowedClasses: ['mage'], allowedRaces: [] 
+  },
+  magisches_geschoss: { 
+    name: 'Magisches Geschoss', cost: 2, description: 'Ein Geschoss aus reiner Magie, das sein Ziel nie verfehlt.', 
+    school: 'evocation', type: 'arcane', tags: ['force'], 
+    allowedClasses: ['mage', 'warlock'], allowedRaces: [] 
+  },
+  schild: { 
+    name: 'Schild', cost: 5, description: 'Ein magischer Schild, der Schaden abwehrt.', 
+    school: 'abjuration', type: 'arcane', tags: ['defense'], 
+    allowedClasses: ['mage', 'paladin'], allowedRaces: [] 
+  },
+
+  // --- Göttliche Magie (Paladin/Druide) ---
+  heilung: { 
+    name: 'Heilung', cost: 5, description: 'Heilt die Wunden eines Verbündeten.', 
+    school: 'evocation', type: 'divine', tags: ['healing'], 
+    allowedClasses: ['paladin', 'druid'], allowedRaces: [] 
+  },
+  schutz_vor_boesem: { 
+    name: 'Schutz vor Bösem', cost: 8, description: 'Schützt ein Ziel vor bösen Kreaturen.', 
+    school: 'abjuration', type: 'divine', tags: ['defense', 'utility'], 
+    allowedClasses: ['paladin'], allowedRaces: [] 
+  },
+
+  // --- Naturmagie (Druide/Waldläufer) ---
+  dornenpeitsche: { 
+    name: 'Dornenpeitsche', cost: 4, description: 'Eine Peitsche aus Dornen, die den Gegner verletzt und zu dir zieht.', 
+    school: 'transmutation', type: 'nature', tags: ['crowd-control'], 
+    allowedClasses: ['druid'], allowedRaces: ['wood_elf'] 
+  },
+  wurzelfalle: { 
+    name: 'Wurzelfalle', cost: 6, description: 'Lässt Wurzeln aus dem Boden schießen, die Gegner festhalten.', 
+    school: 'conjuration', type: 'nature', tags: ['crowd-control'], 
+    allowedClasses: ['druid', 'ranger'], allowedRaces: ['wood_elf'] 
+  },
+  tierfreund: { 
+    name: 'Tierfreund', cost: 3, description: 'Beruhigt ein Tier oder macht es dir freundlich gesinnt.', 
+    school: 'enchantment', type: 'nature', tags: ['utility', 'social'], 
+    allowedClasses: ['druid', 'ranger'], allowedRaces: ['wood_elf'] 
+  },
+
+  // --- Hexenmeister Magie ---
+  schauriger_strahl: { 
+    name: 'Schauriger Strahl', cost: 3, description: 'Ein Strahl aus unheimlicher Energie.', 
+    school: 'evocation', type: 'arcane', tags: ['necrotic', 'dark'], 
+    allowedClasses: ['warlock'], allowedRaces: ['dark_elf'] 
+  },
+  hexenpfeil: { 
+    name: 'Hexenpfeil', cost: 6, description: 'Ein Pfeil, der zusätzlichen Schaden über Zeit verursacht.', 
+    school: 'enchantment', type: 'arcane', tags: ['dot'], 
+    allowedClasses: ['warlock'], allowedRaces: [] 
+  },
+
+  // --- Rassenmagie ---
+  helles_licht: { 
+    name: 'Helles Licht', cost: 4, description: 'Erzeugt eine Kugel aus hellem Licht, die Untote verletzt.', 
+    school: 'evocation', type: 'divine', tags: ['light', 'radiant'], 
+    allowedClasses: [], allowedRaces: ['high_elf'] 
+  },
+  sonnenstrahl: { 
+    name: 'Sonnenstrahl', cost: 8, description: 'Ein Strahl gleißenden Lichts, der Gegner blendet und verbrennt.', 
+    school: 'evocation', type: 'divine', tags: ['light', 'radiant', 'fire'], 
+    allowedClasses: [], allowedRaces: ['high_elf'] 
+  },
+  schattenmantel: { 
+    name: 'Schattenmantel', cost: 5, description: 'Umhüllt dich mit Schatten und macht dich schwerer zu treffen.', 
+    school: 'illusion', type: 'arcane', tags: ['dark', 'defense'], 
+    allowedClasses: [], allowedRaces: ['dark_elf'] 
+  },
+  lebensentzug: { 
+    name: 'Lebensentzug', cost: 7, description: 'Entzieht einem Gegner Lebensenergie und heilt dich.', 
+    school: 'necromancy', type: 'arcane', tags: ['dark', 'necrotic', 'healing'], 
+    allowedClasses: [], allowedRaces: ['dark_elf'] 
+  },
+
+  // --- Klassenspezifische "Zauber" (Krieger/Waldläufer) ---
+  // Waldläufer
+  giftpfeil: { 
+    name: 'Giftpfeil', cost: 4, description: 'Ein Pfeil, der mit einem lähmenden Gift überzogen ist.', 
+    school: 'transmutation', type: 'martial', tags: ['arrow', 'poison', 'crowd-control'], 
+    allowedClasses: ['ranger'], allowedRaces: [] 
+  },
+  dornenpfeil: { 
+    name: 'Dornenpfeil', cost: 5, description: 'Ein magischer Pfeil, der bei Aufprall Dornen explodieren lässt.', 
+    school: 'conjuration', type: 'nature', tags: ['arrow', 'aoe'], 
+    allowedClasses: ['ranger'], allowedRaces: ['wood_elf'] 
+  },
+  explosionspfeil: { 
+    name: 'Explosionspfeil', cost: 8, description: 'Ein Pfeil, der bei Aufprall eine kleine Explosion verursacht.', 
+    school: 'evocation', type: 'martial', tags: ['arrow', 'fire', 'aoe'], 
+    allowedClasses: ['ranger'], allowedRaces: [] 
+  },
+
+  // Krieger
+  klingenschild: { 
+    name: 'Klingenschild', cost: 3, description: 'Du wirbelst deine Waffe so schnell, dass sie Geschosse abwehrt.', 
+    school: 'abjuration', type: 'martial', tags: ['blade', 'defense'], 
+    allowedClasses: ['warrior'], allowedRaces: [] 
+  },
+  tanz_der_klingen: { 
+    name: 'Tanz der Klingen', cost: 6, description: 'Ein schneller Angriff, der mehrere Gegner in Reichweite trifft.', 
+    school: 'evocation', type: 'martial', tags: ['blade', 'aoe'], 
+    allowedClasses: ['warrior', 'rogue'], allowedRaces: [] 
+  },
+  schockwelle: { 
+    name: 'Schockwelle', cost: 7, description: 'Du schlägst mit deiner Waffe auf den Boden und erzeugst eine Schockwelle, die Gegner umwirft.', 
+    school: 'evocation', type: 'martial', tags: ['blade', 'crowd-control', 'aoe'], 
+    allowedClasses: ['warrior'], allowedRaces: [] 
+  }
+};
