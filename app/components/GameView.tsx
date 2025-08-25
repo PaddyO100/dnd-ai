@@ -2,7 +2,7 @@
 'use client';
 import Image from 'next/image';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useGameStore, type GameState, type Player } from '@/lib/state/gameStore';
 import { type CharacterClass } from '@/schemas/character';
 import Sidepanel from './Sidepanel';
@@ -40,12 +40,43 @@ export default function GameView() {
   const [lastDiceResults, setLastDiceResults] = useState<DiceResult[]>([]);
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [saveName, setSaveName] = useState('');
+  const [visibleCount, setVisibleCount] = useState(100);
+  const chatRef = useRef<HTMLDivElement>(null);
+  const scrollAnchorRef = useRef<HTMLDivElement>(null);
+
+  const visibleHistory = useMemo(() => {
+    if (!history) return [];
+    const start = Math.max(0, history.length - visibleCount);
+    return history.slice(start);
+  }, [history, visibleCount]);
 
   // Initialize tutorial and audio when GameView first loads
   useEffect(() => {
     triggerEvent('game_start');
     
-    // Start ambient music for the game
+    // Add welcome message if no history exists
+    if (history.length === 0 && party.length > 0) {
+      const characterNames = party.map(c => c.name).join(', ');
+      const scenario = selections.scenario;
+      
+      const welcomeMessage = `*Die schwere Eichentür schließt sich hinter dir mit einem dumpfen Knall.*
+
+Willkommen in meiner Schmiede, ${characterNames}! Ich bin Aethel, euer Geschichtenerzähler und Wegbegleiter durch die Mysterien dieser Welt.
+
+${scenario?.summary || 'Ein gefährliches Abenteuer erwartet euch.'} 
+
+${scenario?.mapIdea ? `\n${scenario.mapIdea}\n` : ''}
+
+Ihr steht nun am Anfang eurer Reise. Die Entscheidungen, die ihr trefft, werden euer Schicksal bestimmen.
+
+*Aethel lehnt sich in seinem Stuhl zurück, die Augen funkelnd vor Vorfreude.*
+
+Was möchtet ihr als erstes tun? Wollt ihr euch umsehen, mit jemandem sprechen, oder direkt ins Abenteuer stürzen?`;
+
+      pushHistory({ role: 'dm', content: welcomeMessage });
+    }
+    
+  // Start ambient music for the game
     const initAudio = async () => {
       // Detect current scene from game context
       const { history, selections } = useGameStore.getState();
@@ -63,7 +94,13 @@ export default function GameView() {
     
     // Small delay to let components mount
     setTimeout(initAudio, 1000);
-  }, [triggerEvent]);
+  }, [triggerEvent, history.length, party, selections.scenario, pushHistory]);
+
+  // Auto-scroll to bottom on new messages
+  useEffect(() => {
+    // Smooth scroll to anchor when history changes
+    scrollAnchorRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [visibleHistory.length, busy]);
 
   // Removed image-generation polling
 
@@ -288,10 +325,18 @@ export default function GameView() {
               <h2 className="fantasy-subtitle">Geschichte</h2>
             </div>
             
-            <div className="flex-1 overflow-y-auto scroll-fantasy space-y-3 pr-2">
-              {history.map((h: HistoryItem, i: number) => (
+            <div ref={chatRef} className="flex-1 overflow-y-auto scroll-fantasy space-y-3 pr-2">
+              {history.length > visibleHistory.length && (
+                <div className="text-center">
+                  <button
+                    onClick={() => setVisibleCount(c => Math.min(history.length, c + 100))}
+                    className="btn-secondary text-xs"
+                  >Ältere Nachrichten laden</button>
+                </div>
+              )}
+              {visibleHistory.map((h: HistoryItem, i: number) => (
                 <div 
-                  key={i} 
+                  key={`${i}-${h.role}`}
                   className={`${h.role === 'dm' ? 'chat-bubble-dm' : 'chat-bubble-player'} animate-fade-in`}
                 >
                   <div className="flex items-center gap-2 mb-1">
@@ -314,6 +359,7 @@ export default function GameView() {
                   <p className="text-sm leading-relaxed">...</p>
                 </div>
               )}
+              <div ref={scrollAnchorRef} />
             </div>
           </section>
 

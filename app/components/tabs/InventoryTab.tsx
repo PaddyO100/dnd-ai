@@ -13,11 +13,13 @@ interface InventoryTabProps {
 type ViewMode = 'equipment' | 'inventory';
 
 export default function InventoryTab({ player }: InventoryTabProps) {
-  const { updatePlayerInventory } = useGameStore();
+  const { updatePlayerInventory, inventory: globalInventory } = useGameStore();
   const [viewMode, setViewMode] = useState<ViewMode>('equipment');
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   
-  const inventory = player?.inventory || [];
+  // Use both player inventory and global inventory
+  const playerInventory = player?.inventory || [];
+  const inventory = [...playerInventory, ...globalInventory];
   
   // Filter items by location/type
   const equippedItems = inventory.filter(item => item.equipped || item.location === 'equipped');

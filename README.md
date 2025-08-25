@@ -27,7 +27,7 @@ Aethel's Forge combines comfortable onboarding, balanced character generation, d
 - **Visual Dice System**: Beautiful 3D dice roller overlay with physics
 
 ### 🎵 **Immersive Audio**
-- **Scene-Based Music**: 15+ ambient tracks that change based on game context
+- **Scene-Based Music**: 13+ ambient tracks that change based on game context
 - **Smart Audio Management**: Music persists through navigation, no restarts on actions
 - **UI Sound Effects**: Responsive audio feedback for all interactions
 - **Automatic Scene Detection**: AI analyzes game state to select appropriate atmosphere

@@ -4,17 +4,17 @@ import { useState } from 'react';
 import { Character, Skill, Race, Gender, CharacterClass } from '@/schemas/character';
 import { 
   generateCharacter, 
-  characterClasses, 
-  StatDistribution,
-  validatePointBuy,
-  calculatePointBuyCost,
-  itemTemplates
+  characterClasses
 } from '@/lib/character/characterGenerator';
 import { skillDefinitions, SkillName } from '@/lib/character/skillSystem';
 import { getRaceDisplayName, getGenderDisplayName } from '@/lib/character/portraitSystem';
-import { getClassWeaponInfo, isWeaponAllowed, getWeaponEfficiency } from '@/lib/character/classWeaponSystem';
-import { useGameStore } from '@/lib/state/gameStore';
+import { getClassWeaponInfo } from '@/lib/character/classWeaponSystem';
 import { useTranslation } from '@/lib/hooks/useTranslation';
+import PortraitSelector from './PortraitSelector';
+import Tooltip from './ui/Tooltip';
+import { getGermanTerm } from '@/lib/i18n/germanTerms';
+import type { StatDistribution, CharacterClass as GenCharacterClass } from '@/lib/character/characterGenerator';
+import type { TermKey } from '@/lib/i18n/germanTerms';
 
 interface CharacterCreatorProps {
   onCharacterCreated: (character: Character) => void;
@@ -32,19 +32,24 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
   const [selectedClass, setSelectedClass] = useState<CharacterClass>('warrior');
   const [selectedRace, setSelectedRace] = useState<Race>('human');
   const [selectedGender, setSelectedGender] = useState<Gender>('male');
-  const [statMethod, setStatMethod] = useState<'rolled'>('rolled');
-  const [stats, setStats] = useState<StatDistribution>({
-    strength: 8, dexterity: 8, constitution: 8,
-    intelligence: 8, wisdom: 8, charisma: 8
-  });
   const [selectedSkills, setSelectedSkills] = useState<SkillName[]>([]);
   const [selectedEquipment, setSelectedEquipment] = useState<string[]>([]);
   const [generateBackstory, setGenerateBackstory] = useState(true);
   
+  // Map stat keys to tooltip term keys (type-safe, no any-casts)
+  const statKeyMap: Record<keyof StatDistribution, TermKey> = {
+    strength: 'strength',
+    dexterity: 'dexterity',
+    constitution: 'constitution',
+    intelligence: 'intelligence',
+    wisdom: 'wisdom',
+    charisma: 'charisma',
+  };
+  
   const steps = [
     { title: 'Name & Klasse', description: 'Grundlegende Charakterinformationen' },
     { title: 'Rasse & Portrait', description: 'Rasse und Aussehen wählen' },
-    { title: 'Attribute', description: 'Verteilung der Charakterwerte' },
+  { title: 'Attribute', description: 'Verteilung der Charakterwerte (4d6, niedrigsten ablegen)' },
     { title: 'Fertigkeiten', description: 'Zusätzliche Fähigkeiten wählen' },
     { title: 'Ausrüstung', description: 'Waffen und Rüstung wählen' },
     { title: 'Hintergrund', description: 'Charaktergeschichte und Details' },
@@ -52,9 +57,6 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
   ];
 
   
-
-  const { selections } = useGameStore();
-  const campaign = selections.campaign;
 
   const handleCreateCharacter = async () => {
     setLoading(true);
@@ -65,15 +67,16 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
         throw new Error('Name und Klasse sind erforderlich');
       }
 
-      const character = await generateCharacter(name.trim(), selectedClass, {
-        race: selectedRace,
-        gender: selectedGender,
-        statMethod,
-        generateBackstory,
-        customStats: statMethod === 'point_buy' ? stats : undefined,
-        customEquipment: selectedEquipment,
-        campaign: campaign
-      });
+      const character = await generateCharacter(
+        name, 
+        selectedClass,
+        {
+          race: selectedRace,
+          gender: selectedGender,
+          generateBackstory,
+          customEquipment: selectedEquipment
+        }
+      );
 
       // Add selected skills
       const additionalSkills: Skill[] = selectedSkills
@@ -133,7 +136,7 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
             <div>
               <label className="block text-sm font-medium mb-2">Klasse</label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {Object.entries(characterClasses).map(([key, classData]) => (
+                {(Object.entries(characterClasses) as Array<[string, GenCharacterClass]>).map(([key, classData]) => (
                   <button
                     key={key}
                     onClick={() => setSelectedClass(key as CharacterClass)}
@@ -146,14 +149,18 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
                     <h3 className="font-semibold text-lg">{classData.name}</h3>
                     <p className="text-sm text-gray-600 mt-1">{classData.description}</p>
                     <div className="mt-2 flex flex-wrap gap-1">
-                      {classData.primaryStats.map(stat => (
-                        <span
-                          key={stat}
-                          className="px-2 py-1 bg-amber-100 text-amber-800 text-xs rounded"
-                        >
-                          {t(`character.stats.${stat}`)}
-                        </span>
-                      ))}
+                      {classData.primaryStats.map((stat) => {
+                        const term = getGermanTerm(statKeyMap[stat]);
+                        return (
+                        <Tooltip key={stat} content={`${term?.title || t(`character.stats.${stat}`)}\n${term?.description || ''}`}>
+                          <span
+                            className="px-2 py-1 bg-amber-100 text-amber-800 text-xs rounded cursor-help"
+                          >
+                            {t(`character.stats.${stat}`)}
+                          </span>
+                        </Tooltip>
+                        );
+                      })}
                     </div>
                     {/* Show weapon restrictions for selected class */}
                     {selectedClass === key && (
@@ -289,8 +296,8 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto">
               {availableEquipment.map((itemKey) => {
-                const item = itemTemplates[itemKey];
-                if (!item) return null;
+                // const item = itemTemplates[itemKey];
+                
 
                 const isSelected = selectedEquipment.includes(itemKey);
 
@@ -310,31 +317,7 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
                         : 'border-amber-200 hover:border-amber-300'
                     }`}
                   >
-                    <h4 className="font-medium">{item.name}</h4>
-                    <p className="text-sm text-gray-600 mt-1">{item.description}</p>
-                    {item.type === 'weapon' && (() => {
-                      try {
-                        const weaponType = isWeaponAllowed(selectedClass, item.name);
-                        const efficiency = getWeaponEfficiency(selectedClass, item.name);
-                        
-                        return (
-                          <div className={`inline-block ml-2 px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                            weaponType === 'primary' ? 'bg-green-100 text-green-700' :
-                            weaponType === 'secondary' ? 'bg-yellow-100 text-yellow-700' :
-                            weaponType === 'forbidden' ? 'bg-red-100 text-red-700' :
-                            'bg-gray-100 text-gray-600'
-                          }`}>
-                            {weaponType === 'primary' && '✓ Primär'}
-                            {weaponType === 'secondary' && '~ Sekundär'}
-                            {weaponType === 'forbidden' && '✗ Verboten'}
-                            {!['primary', 'secondary', 'forbidden'].includes(weaponType) && '? Unbekannt'}
-                            {efficiency !== 1.0 && ` (${Math.round(efficiency * 100)}%)`}
-                          </div>
-                        );
-                      } catch {
-                        return null;
-                      }
-                    })()}
+                    <h4 className="font-medium">{itemKey}</h4>
                   </button>
                 );
               })}
@@ -400,10 +383,7 @@ export default function CharacterCreator({ onCharacterCreated, onClose }: Charac
                   <p><strong>Klasse:</strong> {classData?.name}</p>
                   <p><strong>Rasse:</strong> {getRaceDisplayName(selectedRace)}</p>
                   <p><strong>Geschlecht:</strong> {getGenderDisplayName(selectedGender)}</p>
-                  <p><strong>Methode:</strong> {
-                    statMethod === 'point_buy' ? 'Point-Buy' :
-                    statMethod === 'standard_array' ? 'Standard Array' : 'Gewürfelt'
-                  }</p>
+                  <p><strong>Methode:</strong> Gewürfelt</p>
                 </div>
 
                 

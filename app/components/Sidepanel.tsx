@@ -6,11 +6,14 @@ import Image from 'next/image';
 import { useGameStore } from '@/lib/state/gameStore';
 import { getCurrentDirectorState } from '@/lib/engine/director';
 import type { DirectorState, PacingType, TensionLevel } from '@/lib/engine/director/types';
-import QuestsTab from './tabs/QuestsTab';
-import SpellsTab from './tabs/SpellsTab';
-import SavesTab from './tabs/SavesTab';
-import InventoryTab from './tabs/InventoryTab';
-import SkillsTab from './tabs/SkillsTab';
+import dynamic from 'next/dynamic';
+const QuestsTab = dynamic(() => import('./tabs/QuestsTab'), { ssr: false, loading: () => <div className="p-3 text-sm text-gray-500">Lade Quests…</div> });
+const SpellsTab = dynamic(() => import('./tabs/SpellsTab'), { ssr: false, loading: () => <div className="p-3 text-sm text-gray-500">Lade Zauber…</div> });
+const SavesTab = dynamic(() => import('./tabs/SavesTab'), { ssr: false, loading: () => <div className="p-3 text-sm text-gray-500">Lade Spielstände…</div> });
+const InventoryTab = dynamic(() => import('./tabs/InventoryTab'), { ssr: false, loading: () => <div className="p-3 text-sm text-gray-500">Lade Inventar…</div> });
+const SkillsTab = dynamic(() => import('./tabs/SkillsTab'), { ssr: false, loading: () => <div className="p-3 text-sm text-gray-500">Lade Fähigkeiten…</div> });
+import Tooltip from './ui/Tooltip';
+import { getGermanTerm } from '@/lib/i18n/germanTerms';
 
 type Tab = 'character' | 'inventory' | 'skills' | 'spells' | 'quests' | 'director' | 'saves';
 
@@ -94,8 +97,12 @@ export default function Sidepanel() {
               <div className="min-w-[60px]">
                 <div className="font-medium leading-3 text-amber-900">{p.name}</div>
                 <div className="flex flex-col gap-0.5">
-                  <Bar label="HP" value={p.hp} max={20} color="bg-red-500" />
-                  <Bar label="MP" value={p.mp} max={20} color="bg-blue-500" />
+                  <Tooltip content={`${getGermanTerm('hp')?.title}\n${getGermanTerm('hp')?.description || ''}`}>
+                    <div><Bar label="HP" value={p.hp} max={20} color="bg-red-500" /></div>
+                  </Tooltip>
+                  <Tooltip content={`${getGermanTerm('mp')?.title}\n${getGermanTerm('mp')?.description || ''}`}>
+                    <div><Bar label="MP" value={p.mp} max={20} color="bg-blue-500" /></div>
+                  </Tooltip>
                 </div>
               </div>
             </div>
@@ -228,7 +235,9 @@ function CharacterTab(props: {
           {/* HP and MP bars with status indicators */}
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-red-600 w-6 font-semibold">HP</span>
+              <Tooltip content={`${getGermanTerm('hp')?.title}\n${getGermanTerm('hp')?.description || ''}`}>
+                <span className="text-xs text-red-600 w-6 font-semibold cursor-help">HP</span>
+              </Tooltip>
               <div className="flex-1 bg-red-100 rounded-full h-3 relative overflow-hidden">
                 <div 
                   className={`h-3 rounded-full transition-all duration-500 ${
@@ -245,7 +254,9 @@ function CharacterTab(props: {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-blue-600 w-6 font-semibold">MP</span>
+              <Tooltip content={`${getGermanTerm('mp')?.title}\n${getGermanTerm('mp')?.description || ''}`}>
+                <span className="text-xs text-blue-600 w-6 font-semibold cursor-help">MP</span>
+              </Tooltip>
               <div className="flex-1 bg-blue-100 rounded-full h-3 relative overflow-hidden">
                 <div 
                   className={`h-3 rounded-full transition-all duration-500 ${

@@ -1,98 +1,86 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useGameStore, GameState } from '@/lib/state/gameStore';
-
-// Define a simplified SaveGame structure for localStorage
-interface LocalSaveGame {
-  id: number;
-  name: string;
-  updatedAt: string;
-  gameState: GameState;
-}
+import { useGameStore } from '@/lib/state/gameStore';
+import { databaseManager } from '@/lib/db/database';
+import type { SavedGame } from '@/lib/db/database';
 
 export default function SaveGameManager() {
-  const [saves, setSaves] = useState<LocalSaveGame[]>([]);
+  const [saves, setSaves] = useState<SavedGame[]>([]);
   const [loading, setLoading] = useState(true);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [saveName, setSaveName] = useState('');
   const gameStore = useGameStore();
 
-  const getSavesFromLocalStorage = (): LocalSaveGame[] => {
-    const savesJson = localStorage.getItem('dnd-ai-saves');
-    return savesJson ? JSON.parse(savesJson) : [];
-  };
-
-  const saveSavesToLocalStorage = (saves: LocalSaveGame[]) => {
-    localStorage.setItem('dnd-ai-saves', JSON.stringify(saves));
-  };
-
-  const loadSaves = useCallback(() => {
+  const loadSaves = useCallback(async () => {
     setLoading(true);
-    const allSaves = getSavesFromLocalStorage();
-    setSaves(allSaves.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()));
-    setLoading(false);
+    try {
+      const allSaves = await databaseManager.getAllSaves();
+      setSaves(allSaves);
+    } catch (error) {
+      console.error('Fehler beim Laden der Spielstände:', error);
+      setSaves([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
     loadSaves();
   }, [loadSaves]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!saveName.trim()) return;
 
-    const gameState = useGameStore.getState();
-    const newSave: LocalSaveGame = {
-      id: Date.now(),
-      name: saveName,
-      updatedAt: new Date().toISOString(),
-      gameState: gameState,
-    };
-
-    const currentSaves = getSavesFromLocalStorage();
-    saveSavesToLocalStorage([...currentSaves, newSave]);
-    
-    setSaveDialogOpen(false);
-    setSaveName('');
-    loadSaves();
-    console.log(`✅ Spiel gespeichert: ${saveName}`);
+    try {
+      await gameStore.saveGameManual(saveName);
+      setSaveDialogOpen(false);
+      setSaveName('');
+      loadSaves();
+      console.log(`✅ Spiel gespeichert: ${saveName}`);
+    } catch (error) {
+      console.error('Fehler beim Speichern:', error);
+    }
   };
 
-  const handleLoad = (saveId: number) => {
-    const saveGame = getSavesFromLocalStorage().find(s => s.id === saveId);
-    if (!saveGame) {
-      console.error('Spielstand nicht gefunden');
-      return;
-    }
-
-    gameStore.importState(saveGame.gameState);
-    if (saveGame.gameState.party?.length > 0) {
+  const handleLoad = async (saveId: number) => {
+    if (!saveId) return;
+    
+    try {
+      const gameState = await databaseManager.loadGame(saveId);
       gameStore.importState({ 
-        ...saveGame.gameState, 
+        ...gameState, 
         step: 'inGame' as const 
       });
+      console.log(`✅ Spielstand geladen (ID: ${saveId})`);
+    } catch (error) {
+      console.error('Fehler beim Laden:', error);
     }
-    console.log(`✅ Spielstand geladen: ${saveGame.name}`);
   };
 
-  const handleDelete = (saveId: number) => {
+  const handleDelete = async (saveId: number) => {
+    if (!saveId) return;
+    
     const confirmDelete = confirm('Spielstand wirklich löschen?');
     if (!confirmDelete) return;
 
-    const currentSaves = getSavesFromLocalStorage();
-    saveSavesToLocalStorage(currentSaves.filter(s => s.id !== saveId));
-    loadSaves();
-    console.log('✅ Spielstand gelöscht');
+    try {
+      await databaseManager.deleteSave(saveId);
+      await loadSaves();
+      console.log('✅ Spielstand gelöscht');
+    } catch (error) {
+      console.error('Fehler beim Löschen:', error);
+    }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (timestamp: Date) => {
     return new Intl.DateTimeFormat('de-DE', {
       day: '2-digit',
       month: '2-digit', 
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
-    }).format(new Date(dateString));
+    }).format(new Date(timestamp));
   };
 
   if (loading) {
@@ -139,11 +127,11 @@ export default function SaveGameManager() {
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <h3 className="font-medium text-gray-900 dark:text-white">{save.name}</h3>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">{formatDate(save.updatedAt)}</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">{formatDate(save.timestamp)}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => handleLoad(save.id)} className="btn-secondary text-sm px-3 py-1">Laden</button>
-                    <button onClick={() => handleDelete(save.id)} className="btn-warning text-sm px-3 py-1">Löschen</button>
+                    <button onClick={() => save.id && handleLoad(save.id)} className="btn-secondary text-sm px-3 py-1">Laden</button>
+                    <button onClick={() => save.id && handleDelete(save.id)} className="btn-warning text-sm px-3 py-1">Löschen</button>
                   </div>
                 </div>
               </div>

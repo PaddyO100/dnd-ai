@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 // import { persist } from 'zustand/middleware'; // Disabled - no auto-persistence
 import type { Character, Skill, Spell, InventoryItem, Condition } from '../../schemas/character';
+import { databaseManager } from '@/lib/db/database';
 
 // Extend Character type for game usage
 export type Player = Character & {
@@ -554,27 +555,23 @@ export const useGameStore = create<GameState>()(
         }));
       },
 
-      // NEW: Manual Save/Load functions using localStorage
+      // Database functions - Updated to use IndexedDB
       saveGameManual: async (saveName: string) => {
         const state = get();
-        const saves: SaveGame[] = JSON.parse(localStorage.getItem('dnd-ai-saves') || '[]');
-        const newSave = { id: Date.now(), name: saveName, updatedAt: new Date().toISOString(), gameState: state };
-        localStorage.setItem('dnd-ai-saves', JSON.stringify([...saves, newSave]));
-        console.log(`✅ Spiel gespeichert als: ${saveName}`);
+        const saveId = await databaseManager.saveGame(saveName, state, false);
+        console.log(`✅ Spiel gespeichert als: ${saveName} (ID: ${saveId})`);
       },
 
       loadGameFromSave: async (saveId: number) => {
-        const saves: SaveGame[] = JSON.parse(localStorage.getItem('dnd-ai-saves') || '[]');
-        const saveGame = saves.find((s) => s.id === saveId);
-        if (!saveGame) throw new Error('Spielstand nicht gefunden');
+        const gameState = await databaseManager.loadGame(saveId);
         
         set({ 
-          ...saveGame.gameState,
+          ...gameState,
           step: 'inGame' as const,
-          selectedPlayerId: saveGame.gameState.selectedPlayerId || undefined
+          selectedPlayerId: gameState.selectedPlayerId || undefined
         });
         
-        console.log(`✅ Spielstand geladen: ${saveGame.name}`);
+        console.log(`✅ Spielstand geladen (ID: ${saveId})`);
       },
 
       clearCachedCharacterData: () => {

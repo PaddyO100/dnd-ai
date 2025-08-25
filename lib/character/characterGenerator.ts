@@ -6,7 +6,7 @@ import { generateAIBackstory } from './backstoryGenerator';
 import { applyRacialBonuses, getRacialTraits } from './raceSystem';
 import { getClassWeaponInfo } from './classWeaponSystem';
 import { getPortraitUrl } from './portraitSystem';
-import { itemTemplates } from './itemGenerator';
+// Entfernt: Doppelter Import von itemTemplates
 
 export interface StatDistribution {
   strength: number;
@@ -309,7 +309,7 @@ const POINT_BUY_COSTS: Record<number, number> = {
 /**
  * Generiert Start-Zauber basierend auf Klasse und Rasse
  */
-export function generateStartingSpells(className: string, race: Race): any[] {
+export function generateStartingSpells(className: string, race: Race): Array<{name: string; cost: number; description: string; school: string; type: string}> {
   const classData = characterClasses[className.toLowerCase()];
   if (!classData) return [];
 
@@ -332,7 +332,13 @@ export function generateStartingSpells(className: string, race: Race): any[] {
   const uniqueSpells = Array.from(new Set(allSpells.map(s => s.name)))
     .map(name => allSpells.find(s => s.name === name));
 
-  return uniqueSpells.filter(Boolean);
+  return uniqueSpells.filter((spell): spell is NonNullable<typeof spell> => Boolean(spell)).map(spell => ({
+    name: spell.name,
+    cost: spell.cost,
+    description: spell.description,
+    school: spell.school,
+    type: spell.type
+  }));
 }
 
 /**
@@ -733,7 +739,6 @@ export async function generateCharacter(
   const weaponRestrictionTraits = generateWeaponRestrictionTraits(className);
   const inventory = generateStartingInventory(className, campaign?.difficulty, customEquipment);
   const quests = generateStartingQuests(className);
-  const classData = characterClasses[className.toLowerCase()];
   const derived = calculateDerivedStats(modifiedStats, className);
   const spells = generateStartingSpells(className, race);
   
@@ -759,7 +764,13 @@ export async function generateCharacter(
     level: 1,
     experience: 0,
     conditions: [],
-    spells: spells,
+    spells: spells.map(spell => ({
+      name: spell.name,
+      description: spell.description,
+      cost: spell.cost,
+      level: 1,
+      school: spell.school
+    })),
     portraitUrl: getPortraitUrl(className as 'warrior' | 'mage' | 'rogue' | 'bard' | 'paladin' | 'ranger' | 'druid' | 'monk' | 'warlock', race, gender), // Set portrait based on selection
     portraitSeed: Math.floor(Math.random() * 1000000),
     skillPoints: 0,

@@ -16,7 +16,21 @@ export interface ItemTemplate {
 }
 
 export const itemTemplates: Record<string, ItemTemplate> = {
-  
+
+  // Beispiel-Template, bitte mit echten Items ergänzen
+  heiltrank: {
+    name: 'Heiltrank',
+    type: 'consumable',
+    subtype: 'none',
+    rarity: 'common',
+    description: 'Stellt 10 Lebenspunkte wieder her.',
+    effects: [{ type: 'spell', value: 10, description: 'Heilt 10 Lebenspunkte' }],
+    value: 50,
+    weight: 0.5,
+    requiresAttunement: false,
+    prerequisites: []
+  }
+};
 
 /**
  * Generiert zufällige Beute basierend auf Begegnungstyp und Level
@@ -177,7 +191,9 @@ function selectWeightedRarity(pools: Record<InventoryItem['rarity'], number>): I
  * Holt alle Items einer bestimmten Seltenheit
  */
 function getItemsByRarity(rarity: InventoryItem['rarity']): ItemTemplate[] {
-  return Object.values(itemDatabase).filter(item => item.rarity === rarity);
+  return Object.values(itemTemplates).filter((item): item is ItemTemplate => 
+    item.rarity === rarity
+  );
 }
 
 
@@ -200,7 +216,7 @@ export function calculateInventoryWeight(inventory: InventoryItem[]): number {
  * Überprüft ob Charakter Item nutzen kann
  */
 export function canUseItem(item: InventoryItem, character: Pick<Character, 'stats'>): { canUse: boolean; reason?: string } {
-  const template = itemDatabase[item.name.toLowerCase().replace(/\s+/g, '_')];
+  const template = itemTemplates[item.name.toLowerCase().replace(/\s+/g, '_')];
   
   if (!template) return { canUse: true };
   
